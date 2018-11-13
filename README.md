@@ -1,5 +1,5 @@
 # miniTopSim
-Project of the Seminar "Scientific Programming in Python" WS 2017/18.
+Project of the Seminar "Scientific Programming in Python" at TU Wien, WS 2018/19.
 
 Set $PYTHONPATH to find modules (assuming you are in the directory where this readme resides):
 ```bash
@@ -28,15 +28,15 @@ In diesem README finden Sie folgende Informationen:
 
 - Sie können den Code jederzeit herunterladen (fetch bzw. pull). Uploaden (push) aber bitte erst NACH der Präsentation.
 
-- Wir wollen anstreben, dass spätestens eine Woche nach der Präsentation (9:00) ein stabiler Code auf Github vorhanden ist. D.h. bei zweiwöchigem Abstand der Vorträge, dass sich ab einer Woche vor Ihrem Vortrag nichts mehr auf Github ändern sollte.
+- Wir wollen anstreben, dass spätestens eine Woche nach der Präsentation (9:00) ein stabiler Code auf Github vorhanden ist. D.h. bei zweiwöchigem Abstand der Vorträge, dass sich ab einer Woche vor den nächsten Vorträgen nichts mehr auf Github ändern sollte.
 
 - Grundsätzlich nur getesteten, voll funktionsfähigen Code uploaden.
 
 - Laden Sie die "abzugebenden Files" bis 9:00 am Tag Ihrer Präsentation auf TUWEL hoch.
 
-- png- und srf-Files werden nicht versioniert, d.h. sie werden nicht ins Repository übertragen. Damit die srf-Files für Vergleichszwecke erhalten bleiben, kopieren Sie sie auf Files mit gleichem Namen aber Endung .srf_save, wenn Sie sicher sind, dass sich nichts mehr ändert.
+- png- und srf-Files werden nicht versioniert, d.h. sie werden nicht ins Repository übertragen. Damit von Ihnen generierte srf-Files für Vergleichszwecke erhalten bleiben, kopieren Sie sie auf Files mit gleichem Namen aber Endung .srf_save, wenn Sie sicher sind, dass sich nichts mehr ändert.
 
-Lesen Sie sorgfältig die Folien "Working with GitHub" aus Kapitel VI der Vorlesung. 
+Lesen Sie sorgfältig die Folien "Working with GitHub" aus dem einleitenden Vortrag. 
 
 
 -------------------------------------
@@ -75,7 +75,7 @@ Welche Parameter in welchen Sections einzuführen sind, ist in den einzelnen Auf
     ParameterNameN+2 = (DefaultWertN+2, 'BedingungN+2', '''ErklärungN+2''')
     ...
 
-Für jeden Parameter sind in einem Tupel der Defaultwert, eine Bedingung und eine Erklärung angegeben. Der Defaultwert kann auch ein Datentyp sein, dann ist der Parameter obligatorisch im cfg-File anzugeben. Die Bedingung kann auch None sein, dann wird keine Bedingung überprüft. Ansonsten ist die Bedingung ein gültiger boolscher Python-Ausdruck, in einem String gespeichert. Er kann denselben oder andere Parameternamen (in Großbuchstaben) als Variablen enthalten. Die Erklärung ist ein String, der (bei Verwendung von Triple-Quotes) auch über mehrere Zeilen laufen kann. Wann immer ein neuer Parameter eingeführt wird, muss also auch ein Eintrag in der Parameter-Datenbank erfolgen.
+Für jeden Parameter sind in einem Tupel der Defaultwert, eine Bedingung und eine Erklärung angegeben. Statt des Defaultwerts kann auch ein Datentyp angegeben sein, dann ist der Parameter obligatorisch mit diesem Datentyp im cfg-File anzugeben. Die Bedingung kann auch None sein, dann wird keine Bedingung überprüft. Ansonsten ist die Bedingung ein gültiger boolscher Python-Ausdruck, in einem String gespeichert. Er kann denselben oder andere Parameternamen (in Großbuchstaben) als Variablen enthalten. Die Erklärung ist ein String, der (bei Verwendung von Triple-Quotes) auch über mehrere Zeilen laufen kann. Wann immer ein neuer Parameter eingeführt wird, muss also auch ein Eintrag in der Parameter-Datenbank erfolgen.
 
 Im Programm werden die Parameter über das parameters Modul (Datei parameters.py) des IO Pakets zur Verfügung gestellt. Dieses wird mit
 
@@ -88,7 +88,7 @@ importiert. Die Parameter stehen als Modulvariablen des parameters Modul zur Ver
 3. Testen
 ---------
 
-Für das Testen verwenden wir Pytest. ACHTUNG: Es gibt ein altes Tool gleichen Namens, das auf einigen Linux-Distributionen noch installiert ist. Falls Sie nicht die Anaconda-Distribution verwenden, vergewissern Sie sich, dass Sie mit dem richtigen Tool arbeiten.
+Ab der zweiten Stunde sind in den Aufgaben automatisierte Tests durchzuführen. Hierfür verwenden wir Pytest. ACHTUNG: Es gibt ein altes Tool gleichen Namens, das auf einigen Linux-Distributionen noch installiert ist. Falls Sie nicht die Anaconda-Distribution verwenden, vergewissern Sie sich, dass Sie mit dem richtigen Tool arbeiten.
 
 Ihre Tests sollen sowohl vom Arbeitsverzeichnis aus aufgerufen laufen (solange Sie daran arbeiten), als auch vom miniTopSim-Verzeichnis (mit "pytest" laufen dann alle Tests des Projekts). Damit die Tests den miniTopSim-Code importieren können, auch wenn PYTHONPATH nicht als Umgebungsvariable gesetzt ist, fügen Sie am Beginn Ihrer Tests folgende Zeilen ein:
 
@@ -108,5 +108,5 @@ Wenn nichts anderes angegeben ist, besteht ein Test aus einer Simulation, die ei
 
 Sie sollen Ihre Arbeit in einem ca. 10-15-minütigen Vortrag präsentieren. Halten Sie den Vortrag in erster Linie für Ihre Kollegen und berücksichtigen Sie deren Wissensstand. Ihr Vortrag soll die Aufgabenstellung darlegen, den Code präsentieren und die Ergebnisse der Tests und/oder Simulationen beschreiben. Sie können dazu mehrere Hilfsmittel verwenden, Powerpoint-Präsentation, Spyder, Editor. Sie können Ihren Laptop verwenden oder Ihre Files auf einem USB-Stick mitbringen. Unser Rechner hat Powerpoint und Spyder installiert. Kurze Rechnungen können Sie online laufen lassen, bei längeren wird es angebracht sein, die Ergebnisse vorzubereiten.
 
-Damit Ihr Code "präsentierbar" ist, schreiben Sie möglichst übersichtlichen Code. Kommentare sollten hauptsächlich im doc-String am Beginn eines Moduls, einer Klasse bzw. einer Funktion stehen; im Code höchstens Einzeiler oder am Zeilenende.
+Damit Ihr Code "präsentierbar" ist, schreiben Sie möglichst übersichtlichen Code und beachten Sie den "Style Guide for Python Code" (http://www.python.org/dev/peps/pep-0008/) und die "Docstring Conventions" (http://www.python.org/dev/peps/pep-0257/).
 
