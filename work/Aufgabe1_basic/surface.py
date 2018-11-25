@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-@author: Philipp
+Surface object and functions for miniTopSim
 """
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,7 +58,3 @@ class Surface:
             fp.write('surface: {}, {}, x-positions y-positions\n'.format(time, len(self.x)))
             for x, y in zip(self.x, self.y):
                 fp.write("{} {}\n".format(x, y))
-
-
-if __name__ == '__main__':
-    surface = Surface()

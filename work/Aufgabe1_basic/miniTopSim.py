@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-@author: Philipp
+Main file for miniTopSim
 """
+
 
 import sys
 
 from surface import Surface
 import advance  as adv
+
 
 if len(sys.argv) < 3:
     print("Usage: miniTopSim.py tend dt")
