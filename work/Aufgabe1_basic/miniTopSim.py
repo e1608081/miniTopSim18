@@ -29,5 +29,6 @@ while time < tend:
     dt = adv.timestep(dt, time, tend)
     time += dt
     surface.write('basic_{}_{}.srf'.format(int(tend), int(dt)), time)
+    #surface.plot(tend, dt)
     
 surface.plot(tend, dt)

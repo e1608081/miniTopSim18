@@ -21,22 +21,14 @@ class Surface:
         
     def normal(self):
         '''Calc normal vector and return it.'''        
-        x = self.enlarge(self.x)
-        y = self.enlarge(self.y)
-        dx = self.calc_vector(self.x, x)
-        dy = self.calc_vector(self.y, y)
+        x = np.concatenate(([self.x[0]], self.x, [self.x[-1]]))
+        y = np.concatenate(([self.y[0]], self.y, [self.y[-1]]))
+        dx = self.calc_vector(x)
+        dy = self.calc_vector(y)
         length = np.linalg.norm([dx,dy],axis=0)
         return dy/length, -dx/length
     
-    def enlarge(self, value):
-        '''Enlarge array to calc nomal vector.'''
-        new_value = np.zeros(value.size + 2)
-        new_value[1:-1] = value
-        new_value[0] = new_value[1]
-        new_value[-1] = new_value[-2]
-        return new_value
-    
-    def calc_vector(self, orig, value):
+    def calc_vector(self, value):
         '''Subtract end coordinate with start coordinate.'''
         delta = value[2:] - value[:-2]
         return delta
@@ -55,6 +47,6 @@ class Surface:
     def write(self, file, time):  
         '''Write output file.'''
         with open(file, 'a') as fp:
-            fp.write('surface: {}, {}, x-positions y-positions\n'.format(time, len(self.x)))
+            fp.write('surface: {} {} x-positions y-positions\n'.format(time, len(self.x)))
             for x, y in zip(self.x, self.y):
                 fp.write("{} {}\n".format(x, y))
