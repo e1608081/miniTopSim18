@@ -1,0 +1,23 @@
+[Setup]
+etching = True
+
+[Initial Conditions]
+xmin = -10.0
+xmax = 100.0
+delta_x = 2.0
+initial_surface_type = Cosine
+fun_xmin = -5.0
+fun_xmax = 0.0
+
+[Numerics]
+time_step = 2.0
+
+[Beam]
+total_time = 7.0
+
+[Physics]
+etch_rate = 3.0
+
+[Output]
+plot_surface = False
+

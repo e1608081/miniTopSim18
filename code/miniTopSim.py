@@ -9,13 +9,19 @@ import sys
 from surface import Surface
 import advance  as adv
 
+import parameters as par
+import plot
 
-if len(sys.argv) < 3:
-    print("Usage: miniTopSim.py tend dt")
-    exit(0)
 
-tend = float(sys.argv[1])
-dt = float(sys.argv[2])
+try:
+    par.set_parameters(sys.argv[1])
+except FileNotFoundError as err:
+    print(err)
+except IndexError as err:
+    print(err)
+
+tend = float(par.TOTAL_TIME)
+dt = float(par.TIME_STEP)
 
 time = 0
     
@@ -29,6 +35,6 @@ while time < tend:
     dt = adv.timestep(dt, time, tend)
     time += dt
     surface.write('basic_{}_{}.srf'.format(int(tend), int(dt)), time)
-    #surface.plot(tend, dt)
-    
-surface.plot(tend, dt)
+  
+if par.PLOT_SURFACE:
+    plot.plot('basic_{}_{}.srf'.format(int(tend), int(dt)))
