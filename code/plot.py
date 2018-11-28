@@ -93,12 +93,12 @@ def keyPressEventFunction(event, times, numels, surfaces, states, fname):
     """
     surfacesCopy = copy.deepcopy( surfaces )
     # Change boundaries
-    if event.key is 'b':
+    if event.key == 'b':
         states['boundary'] = not states['boundary']
         plt.draw()
 
     # Step 'steps' forward
-    if event.key is ' ':
+    if event.key == ' ':
         if states['num'] + states['dL'] < len(surfacesCopy):
             states['num'] += states['dL']
             surface = copy.copy( surfacesCopy[states['num']] )
@@ -118,7 +118,7 @@ def keyPressEventFunction(event, times, numels, surfaces, states, fname):
 
 
     # Change between delete state
-    if event.key is 'd':
+    if event.key == 'd':
         states['delete'] = not states['delete']
 
     # Numbers pressed
@@ -126,11 +126,11 @@ def keyPressEventFunction(event, times, numels, surfaces, states, fname):
         states['dL'] = 2**int(event.key)
 
     # clear the figure and reset it
-    if event.key is 'r':
+    if event.key == 'r':
         plotRewind(times, numels, surfacesCopy, states)
 
     # change aspect ratio
-    if event.key is 'a':
+    if event.key == 'a':
         if plt.axes().get_aspect() is 'equal':
             plt.axes().set_aspect( 'auto' )
         else:
@@ -138,7 +138,7 @@ def keyPressEventFunction(event, times, numels, surfaces, states, fname):
         plt.draw()
 
     # show last line
-    if event.key is 'l':
+    if event.key == 'l':
         surface = surfacesCopy[-1]
         xValues, yValues = surface
         if states['delete']:
@@ -151,7 +151,7 @@ def keyPressEventFunction(event, times, numels, surfaces, states, fname):
         plt.draw()
 
     # Saving current figure
-    if event.key is 's':
+    if event.key == 's':
         plt.savefig( fname[:-4] + '.png', format='png' )
 
 def plotRewind(times, numels, surfaces, states):
