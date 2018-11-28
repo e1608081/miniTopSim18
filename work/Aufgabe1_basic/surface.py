@@ -56,13 +56,13 @@ class Surface:
         plt.show()
         fig.savefig('basic_{}_{}.png'.format(int(tend), int(dtime)), dpi=500)
         
-    def write(self, file, time):  
+    def write(self, file, time, mode):  
         """Write output file.
         
         :param file: filename
         :param time: current time
         """
-        with open(file, 'a') as fp:
+        with open(file, mode) as fp:
             fp.write('surface: {} {} x-positions y-positions\n'.format(time, len(self.x)))
             for x, y in zip(self.x, self.y):
                 fp.write("{} {}\n".format(x, y))

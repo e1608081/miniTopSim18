@@ -21,14 +21,14 @@ time = 0
     
 surface = Surface()   
 
-surface.write('basic_{}_{}.srf'.format(int(tend), int(dt)), time)    
+surface.write('basic_{}_{}.srf'.format(int(tend), int(dt)), time, 'w')    
      
 while time < tend:
         
     adv.advance(surface,dt)
     dt = adv.timestep(dt, time, tend)
     time += dt
-    surface.write('basic_{}_{}.srf'.format(int(tend), int(dt)), time)
+    surface.write('basic_{}_{}.srf'.format(int(tend), int(dt)), time, 'a')
     #surface.plot(tend, dt)
     
 surface.plot(tend, dt)
