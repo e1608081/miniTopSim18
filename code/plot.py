@@ -26,6 +26,7 @@ def plot(fname):
     plt.rcParams['keymap.home'] = ['h', 'home']
     plt.rcParams['keymap.quit'] = ['q']
     plt.rcParams['keymap.save'] = ['ctrl+s']
+    plt.rcParams['keymap.yscale'] = []
     # Start event handler for key press
     fig = plt.figure(1)
     cid = fig.canvas.mpl_connect('key_press_event', lambda event: keyPressEventFunction(event, times, numels, surfaces, states, fname))
