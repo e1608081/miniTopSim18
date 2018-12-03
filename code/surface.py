@@ -40,22 +40,7 @@ class Surface:
         """
         delta = value[2:] - value[:-2]
         return delta
-        
-    def plot(self, tend, dtime):
-        """Plot figure with start and end values.
-        
-        :param tend: end time
-        :param dtime: current timestep
-        """
-        fig = plt.figure()
-        plt.title('miniTopSim')
-        plt.grid()
-        plt.plot(self.startx, self.starty, 'gx-', label='Start')
-        plt.plot(self.x, self.y, 'rx-', label='Stop')
-        plt.legend()
-        plt.show()
-        fig.savefig('basic_{}_{}.png'.format(int(tend), int(dtime)), dpi=500)
-        
+               
     def write(self, file, time, mode):  
         """Write output file.
         
