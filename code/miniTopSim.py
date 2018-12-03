@@ -17,8 +17,10 @@ try:
     par.set_parameters(sys.argv[1])
 except FileNotFoundError as err:
     print(err)
-except IndexError as err:
-    print(err)
+    sys.exit(-1)
+except IndexError:
+    print('No file specified as systemargument')
+    sys.exit(-1)
 
 tend = float(par.TOTAL_TIME)
 dt = float(par.TIME_STEP)

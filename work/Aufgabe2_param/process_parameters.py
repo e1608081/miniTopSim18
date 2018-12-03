@@ -18,10 +18,14 @@ Created on Sun Nov 25 10:28:49 2018
 """
 
 import sys
+import os
 import configparser
 
 import parameters as par
 
+filedir = os.path.dirname(__file__)
+codedir = os.path.join(filedir, '..', '..', 'code')
+sys.path.insert(0, codedir)
 
 def _write_output(output_file):
     """Write the values to output file
@@ -63,14 +67,17 @@ def _write_output(output_file):
         cfg.write(output)
 
 
+
 try:
     check_flag = par.set_parameters(sys.argv[1])
 except FileNotFoundError as err:
     print(err)
-except IndexError as err:
-    print(err)
-finally:
-    _write_output(str(sys.argv[1]).replace('.cfg','.dat'))
+    sys.exit(-1)
+except IndexError:
+    print('No file specified as systemargument')
+    sys.exit(-1)
+
+_write_output(str(sys.argv[1]).replace('.cfg','.dat'))
 
         
 
