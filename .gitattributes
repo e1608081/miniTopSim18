@@ -1,0 +1,3 @@
+*.py text=auto
+*.db text=auto
+*.cfg text=auto
