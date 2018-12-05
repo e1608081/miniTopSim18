@@ -13,13 +13,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from init_surface import init_surface
-
+import parameters as par
 
 class Surface:
     
     def __init__(self):
         """Init the object. Copy start value for printing."""
-        self.x = np.linspace(-50, 50, 101)
+        num_points = (par.XMAX - par.XMIN) // par.DELTA_X
+        self.x = np.linspace(par.XMIN, par.XMAX, num_points)
         self.y = np.array(init_surface(self.x))
         self.startx = np.copy(self.x)
         self.starty = np.copy(self.y)
