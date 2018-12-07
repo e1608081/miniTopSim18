@@ -5,6 +5,7 @@ Main file for miniTopSim
 
 
 import sys
+import os
 
 from surface import Surface
 import advance  as adv
@@ -12,7 +13,7 @@ import advance  as adv
 import parameters as par
 import plot
 
-def simulate(config_file):
+def simulate(config_file, do_plotting=True):
     """
     Performs a simulation with the parameters given inside the config file
     
@@ -34,17 +35,21 @@ def simulate(config_file):
     dt = float(par.TIME_STEP)
     time = 0
     
-    surface = Surface()   
-    surface.write('{}_{}_{}.srf'.format(config, int(tend), int(dt)), time, 'w')    
+    surface = Surface()
+    surface_filename = '{}_{}_{}.srf'.format(config, int(tend), int(dt))
+    surface.write(surface_filename, time, 'w')    
          
     while time < tend:
         adv.advance(surface,dt)
         dt = adv.timestep(dt, time, tend)
         time += dt
-        surface.write('{}_{}_{}.srf'.format(config, int(tend), int(dt)), time, 'a')
+        surface.write(surface_filename, time, 'a')
     
-    if par.PLOT_SURFACE:
-        plot.plot('{}_{}_{}.srf'.format(config, int(tend), int(dt)))
+    if par.PLOT_SURFACE and do_plotting:
+        if os.path.isfile(surface_filename + "_save"):
+            plot.plot(surface_filename, surface_filename + "_save")
+        else:
+            plot.plot(surface_filename)
     
     return surface
 
