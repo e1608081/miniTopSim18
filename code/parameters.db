@@ -1,5 +1,5 @@
 [Setup]
-ETCHING = (True, 'ETCHING',
+ETCHING = (True, None,
     '''Flag selecting the simulation mode between etching and sputtering.
     ''')
 
@@ -36,10 +36,32 @@ TIME_STEP = (1., 'TIME_STEP > 0.',
 TOTAL_TIME = (float, 'TOTAL_TIME > 0.',
     '''Total beam time = total simulation time.
     ''')
+BEAM_CURRENT_DENSITY = (0.001, 'BEAM_CURRENT_DENSITY > 0.',
+    '''Beam current density J [A/cm^2]
+    The beam flux density can be calculated by F_beam = J/e, where e is the
+    elementary charge.
+    ''')
 
 [Physics]
-ETCH_RATE = (1., None,
+ETCH_RATE = (1., 'ETCH_RATE > 0.',
     '''Etch rate = surface velocity if ETCHING==True.
+    ''')
+SPUTTER_YIELD_0 = (0.11 , 'SPUTTER_YIELD_0 > 0.',
+    '''Parameter Y_0 for yamamura formula.
+    ''')
+SPUTTER_YIELD_F = (1.9 , 'SPUTTER_YIELD_F > 0.',
+    '''Parameter f for yamamura formula.
+    ''')
+SPUTTER_YIELD_B = (0.19 , 'SPUTTER_YIELD_B > 0.',
+    '''Parameter b for yamamura formula.
+    ''')
+SPUTTER_YIELD_FILE = ('' , None,
+    '''Filename of Sputter-Yield-Table stored in /miniTopSim/tables.
+    If empty, sputter yield will be calculated with the yamamura formula. If
+    set, values will be linear interpolated based on the provided data.
+    ''')
+DENSITY = (5e22 , 'DENSITY > 0.',
+    '''Atom density N [Atoms/cm^3], Default: Si: 5e22 Atoms/cm^3.
     ''')
 
 [Output]
