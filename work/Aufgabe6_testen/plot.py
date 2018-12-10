@@ -189,7 +189,15 @@ def keyPressEventFunction(event):
         plt.savefig(fname[:-4] + '.png', format='png')
 
 def plotRewind():
-    """Resets the plot to only show the first line."""
+    """Resets the plot to only show the first line.
+
+        :param event:   event handler variable
+        :param times:   time variable for each line
+        :param numels:  number of points for the lines
+        :param surface: coordinate values of the surface
+        :param states:  variable storing the delete and boundary state for
+                        the plot and the current x and y limits of the plot
+    """
     global data1, states
     states['num'] = 0
     
