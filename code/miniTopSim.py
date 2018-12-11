@@ -5,6 +5,7 @@ Main file for miniTopSim
 
 import sys
 import os
+from time import clock
 
 import advance as adv
 import parameters as par
@@ -20,6 +21,9 @@ def simulate(config_file, do_plotting=True):
         
         :return the surface object after last simulation step
     """
+    
+    time_start = clock()
+    
     try:
         par.set_parameters(config_file)
     except FileNotFoundError as err:
@@ -44,6 +48,9 @@ def simulate(config_file, do_plotting=True):
         dt = adv.timestep(dt, time, tend)
         time += dt
         surface.write(surface_filename, time, 'a')
+    
+    time_compute = clock() - time_start
+    print("Computing Time = " + str(time_compute))
     
     if par.PLOT_SURFACE and do_plotting:
         if os.path.isfile(surface_filename + "_save"):

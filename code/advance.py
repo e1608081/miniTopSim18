@@ -14,6 +14,7 @@ from scipy.constants import e
 
 import parameters as par
 from sputtering import sputter_yield
+import surface 
 
 
 def advance(surface, dtime):
@@ -28,7 +29,8 @@ def advance(surface, dtime):
 
     surface.x += dtime * normal_x * normal_v
     surface.y += dtime * normal_y * normal_v
-
+    
+    surface.deloop()
 
 def timestep(dtime, time, endTime):
     """Get next possible timestep.

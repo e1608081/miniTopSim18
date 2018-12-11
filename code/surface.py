@@ -124,6 +124,47 @@ class Surface:
             minimum_distance = cur_distance
         
         return minimum_distance
+    
+    def deloop(self):
+        """Remove all loops from the surface"""
+        
+        x=np.array((self.x[:-1], self.x[1:]-self.x[:-1]))   #(x,dx)
+        y=np.array((self.y[:-1], self.y[1:]-self.y[:-1]))   #(y,dy)
+        
+        for i in range(len(self.x)-1):
+            #start from i+2, to skip neighbour segment
+            for j in np.arange(i+2,len(self.x)-1):
+                
+                #coefficient matrix
+                A = np.array(((x[1,i], -x[1,j]),(y[1,i], -y[1,j])))
+                #inhomogeneity
+                b = np.array((x[0,j]-x[0,i],y[0,j]-y[0,i]))
+                              
+                try:
+                    #the linear equasion has exactly one solution
+                    st = np.linalg.solve(A,b)   
+                                   
+                    #0 <= s,t < 1
+                    if np.all(np.logical_and(st>=0, st<1)):
+                        
+                        #create a mask which deletes the survace points
+                        #from the loop
+                        mask_cut = np.fromfunction(lambda k: 
+                            np.logical_not(np.logical_and(k>(i+1),k<=j)),
+                            (len(self.x),))
+                        
+                        self.x[i+1] = x[0,i]+ x[1,i]*st[0]
+                        self.y[i+1] = y[0,i]+ y[1,i]*st[0]
+                        self.x =self.x[mask_cut]
+                        self.y =self.y[mask_cut]
+                        x=np.array((self.x[:-1], self.x[1:]-self.x[:-1]))   
+                        y=np.array((self.y[:-1], self.y[1:]-self.y[:-1]))   
+                        
+                        break
+                    
+                except np.linalg.linalg.LinAlgError: 
+                    #the linear equasion has more then one or no solution
+                    None
 
 def load(file, wanted_time = None):
     """
