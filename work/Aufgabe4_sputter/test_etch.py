@@ -19,4 +19,4 @@ def test_etch_10_1():
                                     False)
     saved = surface.load(os.path.join(dirname, 'etch_10_1.srf_save'))
 
-    assert simulated.distance(saved) < 0.00215
+    assert simulated.distance(saved) < 0.0027584

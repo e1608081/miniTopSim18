@@ -135,15 +135,19 @@ def keyPressEventFunction(event):
                 plt.xlabel('x-values in nm')
                 plt.ylabel('y-values in nm')
             
-            if states['boundary']:
-                adoptBoundaries(xValues1, yValues1, states)
-
             line, = plt.plot(xValues1, yValues1)
+            
+            xValues2 = None
+            yValues2 = None
             if data2 is not None:
                 surface2 = get_best_surface(data2, data1[states['num']]['time'])
                 xValues2 = surface2["xVals"]
                 yValues2 = surface2["yVals"]
                 plt.plot(xValues2, yValues2, "--", color=line.get_color())
+            
+            # check if plot limits havo to be adopted and do so if 
+            if states['boundary']:
+                adoptBoundaries(xValues1, yValues1, xValues2, yValues2, states)
             
             plt.xlim(states['xlo'] - 1, states['xup'] + 1)
             plt.ylim(states['ylo'] - 1, states['yup'] + 1)
@@ -177,11 +181,25 @@ def keyPressEventFunction(event):
         yValues = surface["yVals"]
         if states['delete']:
             plt.cla()
+            plt.grid(True,'major')
+            plt.xlabel('x-values in nm')
+            plt.ylabel('y-values in nm')
+        
+        line, = plt.plot(xValues, yValues)
+        
+        xValues2 = None
+        yValues2 = None
+        if data2 is not None:
+            surface2 = get_best_surface(data2, data1[states['num']]['time'])
+            xValues2 = surface2["xVals"]
+            yValues2 = surface2["yVals"]
+            plt.plot(xValues2, yValues2, "--", color=line.get_color())
+            
         if states['boundary']:
-            adoptBoundaries(xValues, yValues, states)
+            adoptBoundaries(xValues, yValues, xValues2, yValues2, states)
         plt.xlim(states['xlo'] - 1, states['xup'] + 1)
         plt.ylim(states['ylo'] - 1, states['yup'] + 1)
-        plt.plot(xValues, yValues)
+            
         plt.draw()
 
     # Saving current figure
@@ -198,36 +216,46 @@ def plotRewind():
     xValues1 = surface1["xVals"]
     yValues1 = surface1["yVals"]
     
-    # check if plot limits havo to be adopted and do so if 
-    if states['boundary']:
-        adoptBoundaries(xValues1, yValues1, states)
     # Plot the selected surface
     plt.cla()
-    plt.xlim(states['xlo'] - 1, states['xup'] + 1)
-    plt.ylim(states['ylo'] - 1, states['yup'] + 1)
     line, = plt.plot(xValues1, yValues1)
+    
+    xValues2 = None
+    yValues2 = None
     if data2 is not None:
         surface2 = get_best_surface(data2, data1[0]['time'])
         xValues2 = surface2["xVals"]
         yValues2 = surface2["yVals"]
         plt.plot(xValues2, yValues2, "--", color=line.get_color())
-            
+        
+    # check if plot limits havo to be adopted and do so if 
+    if states['boundary']:
+        adoptBoundaries(xValues1, yValues1, xValues2, yValues2, states)
+    plt.xlim(states['xlo'] - 1, states['xup'] + 1)
+    plt.ylim(states['ylo'] - 1, states['yup'] + 1)
+        
     plt.grid(True,'major')
     plt.xlabel('x-values in nm')
     plt.ylabel('y-values in nm')
     plt.draw()
 
-def adoptBoundaries(xValues, yValues, states):
+def adoptBoundaries(xValues, yValues, xValues2, yValues2, states):
     """Set the limits according to the given data and store them.
 
         :param xValues:     x coordinates of the points of the surrface
         :param yValues:     y coordinates of the points of the surrface
         :param states:      variable to store the current limits
     """
-    states['xlo'] = xValues[0]
-    states['xup'] = xValues[-1]
+    states['xlo'] = min(xValues)
+    states['xup'] = max(xValues)
     states['ylo'] = min(yValues)
     states['yup'] = max(yValues)
+    
+    if xValues2 is not None and yValues2 is not None:
+        states['xlo'] = min(states['xlo'], min(xValues2))
+        states['xup'] = max(states['xup'], max(xValues2))
+        states['ylo'] = min(states['ylo'], min(yValues2))
+        states['yup'] = max(states['yup'], max(yValues2))
 
 def get_best_surface(data, time):
     """Searches for the nearest dataset for a given time"""

@@ -15,7 +15,8 @@ def test_etch_1_vs_1():
     import surface
     import plot
     
-    simulated = miniTopSim.simulate(os.path.join(code_dir, 'etch_dx1.cfg'), False)
-    saved = surface.load(os.path.join(code_dir, 'etch_dx1_10_1.srf_save'))
+    simulated = miniTopSim.simulate(os.path.join(dirname, 'etch_dx1.cfg'), False)
+    saved = surface.load(os.path.join(dirname, 'etch_dx1_10_0.srf_save'))
     
-    assert simulated.distance(saved) < 0.00215
+    #measured value: 0.0135894565864
+    assert simulated.distance(saved) < 0.0027584

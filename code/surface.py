@@ -81,46 +81,55 @@ class Surface:
     
     def point_distance(self, point):
         """Calculates the distance of a point to a surface"""
+        
+        #define start & enpoint of our surface parts
+        self.x = np.array(self.x)
+        self.y = np.array(self.y)
+        s_x = self.x[:-1]
+        s_y = self.y[:-1]
+        e_x = self.x[1:]
+        e_y = self.y[1:]
+        
+        #define a shorter variable name for point
+        px = point[0]
+        py = point[1]
+        
+        #calculate vector and normal vector of segment
+        ab_x = e_x - s_x
+        ab_y = e_y - s_y
+        n_x = ab_y
+        n_y = -ab_x
+        
+        #calculate the normal distance
+        ap_x = px - s_x
+        ap_y = py - s_y
+        
+        normal_distance = (n_x*ap_x + n_y*ap_y)/(n_x*n_x + n_y*n_y)
+        
+        #now calculate where we would be inside the segment
+        #0 stands for start point
+        #1 stands for end point
+        segment_part = (ab_x*ap_x + ab_y*ap_y)/(ab_x*ab_x + ab_y*ab_y)
+        
+        #use this information to create a mask that shows validity of normal distance
+        norm_d_valid = np.logical_and(segment_part >= 0, segment_part <= 1)
+        
+        #calculate minimum distance based on that
         minimum_distance = None
-        cur_distance = None
-        x_distance = None
-        y_distance = None
+        if np.any(norm_d_valid):
+            minimum_distance = (np.absolute(normal_distance[np.where(norm_d_valid)])).min()
         
-        own_points = np.array(list(zip(self.x, self.y)))
-        
-        """
-        Calculating distance of segment with point
-        assume endpoints are A = (a,b) and B = (c,d)
-        assume point is P = (x,y)
-        
-        We calculate:
-        surface Vector is AB = (a-c, b-d)
-        normal Vector is n = (d-b, a-c)
-        Vector from endpoint to Point is AP = (a-x, b-y)
-        dot product of AP and n is our wanted distance
-        -> AP * n = (a-x)*(d-b) + (b-y)*(a-c) =
-                  = a*d - b*c + x*(b-d) + y*(c-a)
-        """
-        s_points = own_points[:-1]
-        e_points = own_points[1:]
-        
-        cur_distance = s_points[:, 0]*e_points[:, 1] - e_points[:, 0]*s_points[:, 1] + \
-                point[0]*(s_points[:, 1] - e_points[:, 1]) + \
-                point[1]*(e_points[:, 0] - s_points[:, 0])
-        
-        minimum_distance = (np.absolute(cur_distance)).min()
-        
-        #now do it with start and endpoint
-        x_distance = own_points[0][0] - point[0]
-        y_distance = own_points[0][1] - point[1]
-        cur_distance = np.sqrt(x_distance*x_distance + y_distance*y_distance)
-        if cur_distance < minimum_distance:
+        #get distance from start and enpoint and compare
+        x_distance = s_x - px
+        y_distance = s_y - py
+        cur_distance = np.sqrt(x_distance*x_distance + y_distance*y_distance).min()
+        if minimum_distance is None or cur_distance < minimum_distance:
             minimum_distance = cur_distance
         
-        x_distance = own_points[-1][0] - point[0]
-        y_distance = own_points[-1][1] - point[1]
-        cur_distance = np.sqrt(x_distance*x_distance + y_distance*y_distance)
-        if cur_distance < minimum_distance:
+        x_distance = e_x - px
+        y_distance = e_y - py
+        cur_distance = np.sqrt(x_distance*x_distance + y_distance*y_distance).min()
+        if minimum_distance is None or cur_distance < minimum_distance:
             minimum_distance = cur_distance
         
         return minimum_distance
