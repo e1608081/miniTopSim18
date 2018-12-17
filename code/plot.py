@@ -135,7 +135,7 @@ def keyPressEventFunction(event):
                 plt.xlabel('x-values in nm')
                 plt.ylabel('y-values in nm')
             
-            line, = plt.plot(xValues1, yValues1)
+            line, = plt.plot(xValues1, yValues1, '.-')
             
             xValues2 = None
             yValues2 = None

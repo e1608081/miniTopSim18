@@ -31,6 +31,8 @@ def advance(surface, dtime):
     surface.y += dtime * normal_y * normal_v
     
     surface.deloop()
+    
+    surface.eliminate_overhangs()
 
 def timestep(dtime, time, endTime):
     """Get next possible timestep.
@@ -74,36 +76,37 @@ def get_velocities(surface, dtime):
         # F_sput = F_beam * Y_s(theta) * cos(theta)
         F_sput = F_beam * Y_s * np.cos(theta)
 
-        # remove overhanging structures
-        lastx = surface.x[0]
-        for i in range(1, surface.x.size-1):
-            if surface.x[i] < 0. and surface.x[i] < lastx:
-                if surface.y[i] <= surface.y[i-1]:
-                    # shadowed point
-                    F_sput[i] = 0
+        if False:
+            # remove overhanging structures
+            lastx = surface.x[0]
+            for i in range(1, surface.x.size-1):
+                if surface.x[i] < 0. and surface.x[i] < lastx:
+                    if surface.y[i] <= surface.y[i-1]:
+                        # shadowed point
+                        F_sput[i] = 0
+                    else:
+                        # point that shadow the last point
+                        if surface.y[i] > np.max(surface.y):
+                            # update lastx to the current point
+                            lastx = surface.x[i]
+                        F_sput[i-1] = 0
                 else:
-                    # point that shadow the last point
-                    if surface.y[i] > np.max(surface.y):
-                        # update lastx to the current point
-                        lastx = surface.x[i]
-                    F_sput[i-1] = 0
-            else:
-                lastx = surface.x[i]
+                    lastx = surface.x[i]
 
-        lastx = surface.x[-1]
-        for i in range(-2, -surface.x.size+1, -1):
-            if surface.x[i] > 0. and surface.x[i] > lastx:
-                if surface.y[i] <= surface.y[i+1]:
-                    # shadowed point
-                    F_sput[i] = 0
+            lastx = surface.x[-1]
+            for i in range(-2, -surface.x.size+1, -1):
+                if surface.x[i] > 0. and surface.x[i] > lastx:
+                    if surface.y[i] <= surface.y[i+1]:
+                        # shadowed point
+                        F_sput[i] = 0
+                    else:
+                        # point that shadow the last point
+                        if surface.y[i] > np.max(surface.y):
+                            # update lastx to the current point
+                            lastx = surface.x[i]
+                        F_sput[i+1] = 0
                 else:
-                    # point that shadow the last point
-                    if surface.y[i] > np.max(surface.y):
-                        # update lastx to the current point
-                        lastx = surface.x[i]
-                    F_sput[i+1] = 0
-            else:
-                lastx = surface.x[i]
+                    lastx = surface.x[i]
 
         v_normal = F_sput / N
 

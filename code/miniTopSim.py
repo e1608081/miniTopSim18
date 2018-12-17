@@ -61,8 +61,8 @@ def simulate(config_file, do_plotting=True):
     return surface
 
 if __name__ == "__main__":
-    try:
+#    try:
         simulate(sys.argv[1])
-    except IndexError:
-        print('No file specified as systemargument')
-        sys.exit(-1)
+#    except IndexError:
+#        print('No file specified as systemargument')
+#        sys.exit(-1)

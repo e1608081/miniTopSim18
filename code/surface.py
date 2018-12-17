@@ -206,6 +206,22 @@ class Surface:
         self.x = self.x[mask_remove]
         self.y = self.y[mask_remove]   
 
+    def eliminate_overhangs(self):
+        """Eliminate overhanging parts of the surface.
+        """
+        for i in range(self.x.size-1):
+            self.x[i+1:] = np.where(
+                    np.logical_and(self.x[i+1:] < self.x[i],
+                                   self.y[i+1:] < self.y[i]), 
+                    self.x[i], 
+                    self.x[i+1:])
+            self.x[:i] = np.where(
+                    np.logical_and(self.x[:i] > self.x[i],
+                                   self.y[:i] < self.y[i]), 
+                    self.x[i], 
+                    self.x[:i])
+    
+
 def load(file, wanted_time = None):
     """
     Loads the data from a .srt file.
