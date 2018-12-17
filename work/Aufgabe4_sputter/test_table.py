@@ -17,6 +17,6 @@ def test_table_10_1():
 
     simulated = miniTopSim.simulate(os.path.join(dirname, 'table.cfg'),
                                     False)
-    saved = surface.load(os.path.join(dirname, 'table_10_1.srf_save'))
+    saved = surface.load(os.path.join(dirname, 'table.srf_save'))
 
     assert simulated.distance(saved) < 0.0027584

@@ -40,7 +40,7 @@ def simulate(config_file, do_plotting=True):
     
     init_sputtering()
     surface = Surface()
-    surface_filename = '{}_{}_{}.srf'.format(config, int(tend), int(dt))
+    surface_filename = '{}.srf'.format(config)
     surface.write(surface_filename, time, 'w')    
          
     while time < tend:

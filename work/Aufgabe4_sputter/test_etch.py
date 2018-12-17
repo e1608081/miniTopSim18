@@ -17,6 +17,6 @@ def test_etch_10_1():
 
     simulated = miniTopSim.simulate(os.path.join(dirname, 'etch.cfg'),
                                     False)
-    saved = surface.load(os.path.join(dirname, 'etch_10_1.srf_save'))
+    saved = surface.load(os.path.join(dirname, 'etch.srf_save'))
 
     assert simulated.distance(saved) < 0.0027584

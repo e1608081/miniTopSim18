@@ -137,7 +137,7 @@ class Surface:
     def deloop(self):
         """Remove all loops from the surface"""
     
-        n_segments = len(self.y)-1      #amount if segments
+        n_segments = len(self.y)-1      #amount of segments
         
         #make 2D arrays containing all possible combinations for x,y and dx,dy
         x_i, x_j = np.meshgrid(self.x[:-1],self.x[:-1],indexing='ij')
