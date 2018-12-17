@@ -136,44 +136,75 @@ class Surface:
     
     def deloop(self):
         """Remove all loops from the surface"""
+    
+        n_segments = len(self.y)-1      #amount if segments
         
-        x=np.array((self.x[:-1], self.x[1:]-self.x[:-1]))   #(x,dx)
-        y=np.array((self.y[:-1], self.y[1:]-self.y[:-1]))   #(y,dy)
+        #make 2D arrays containing all possible combinations for x,y and dx,dy
+        x_i, x_j = np.meshgrid(self.x[:-1],self.x[:-1],indexing='ij')
+        y_i, y_j = np.meshgrid(self.y[:-1],self.y[:-1],indexing='ij')
+        dx=np.array(self.x[1:]-self.x[:-1])
+        dy=np.array(self.y[1:]-self.y[:-1])
+        dx_i, dx_j = np.meshgrid(dx, dx, indexing='ij')
+        dy_i, dy_j = np.meshgrid(dy, dy, indexing='ij')
         
-        for i in range(len(self.x)-1):
-            #start from i+2, to skip neighbour segment
-            for j in np.arange(i+2,len(self.x)-1):
-                
-                #coefficient matrix
-                A = np.array(((x[1,i], -x[1,j]),(y[1,i], -y[1,j])))
-                #inhomogeneity
-                b = np.array((x[0,j]-x[0,i],y[0,j]-y[0,i]))
-                              
-                try:
-                    #the linear equasion has exactly one solution
-                    st = np.linalg.solve(A,b)   
-                                   
-                    #0 <= s,t < 1
-                    if np.all(np.logical_and(st>=0, st<1)):
-                        
-                        #create a mask which deletes the survace points
-                        #from the loop
-                        mask_cut = np.fromfunction(lambda k: 
-                            np.logical_not(np.logical_and(k>(i+1),k<=j)),
-                            (len(self.x),))
-                        
-                        self.x[i+1] = x[0,i]+ x[1,i]*st[0]
-                        self.y[i+1] = y[0,i]+ y[1,i]*st[0]
-                        self.x =self.x[mask_cut]
-                        self.y =self.y[mask_cut]
-                        x=np.array((self.x[:-1], self.x[1:]-self.x[:-1]))   
-                        y=np.array((self.y[:-1], self.y[1:]-self.y[:-1]))   
-                        
-                        break
-                    
-                except np.linalg.linalg.LinAlgError: 
-                    #the linear equasion has more then one or no solution
-                    None
+        
+        #creating the arrays for the linear equations A*x=b
+        #use np.stack to bring them in the right shape:
+        #shape(A)=(M,M,2,2)
+        #shape(b)=(M,M,2)
+        b_temp = np.array((x_j-x_i,y_j-y_i))
+        A_temp = np.array((np.stack((dx_i,-dx_j),axis=2),
+                           np.stack((dy_i,-dy_j),axis=2)))
+        b = np.stack(b_temp, axis=2)
+        A = np.stack(A_temp, axis=2)
+        
+        #calculate the rank of each matrix in A.
+        #If the rank is one the matrix is singular
+        rank = np.linalg.matrix_rank(A)
+        
+        #create a mask, because not all equations in A*x=b
+        #can or must be solved:
+        #mask equations without a solution
+        mask_singular = np.not_equal(rank,1)
+        #mask the triangele matrix of (M,M), so we don't solve the same 
+        #equation twice: ij = ji
+        mask_sing_tri = np.triu(mask_singular) 
+        #mask equations where i=j and j= i+1
+        mask_diagonal = np.logical_not(np.logical_or(np.eye(n_segments, k=1),
+                                                     np.eye(n_segments, k=0)))
+        #combine all masks
+        mask = np.logical_and(mask_sing_tri,mask_diagonal)
+        
+        #initiate the array for the solutions
+        st=np.full_like(b,99999, dtype=float)
+       
+        #solve the equations A*st=b
+        st[mask] = np.linalg.solve(A[mask],b[mask])
+        #just solutions where: 0<= s,t <1 are relevant for crossings
+        crossings = np.all(np.logical_and(np.greater_equal(st,0),
+                                          np.less(st,1)), axis=2)
+
+        #get the indexes of the intersecting segments        
+        indexes_i, indexes_j = np.meshgrid(np.arange(n_segments),
+                                           np.arange(n_segments),indexing='ij')
+        i = indexes_i[crossings]
+        j = indexes_j[crossings]
+        #indexes has the shape: [[i_1,j_1], [i_2, j_2]]
+        indexes = np.stack((i,j), axis =1)
+        
+        #create a mask to remove the loop-segments and add new surface-points
+        #for the intersections
+        mask_remove = np.ones(n_segments+1, dtype=bool)
+        #remove the segments form the loop
+        for temp_i, temp_j in indexes:
+            mask_remove_temp = np.fromfunction(lambda k:np.logical_not(
+                    np.logical_and(k>(temp_i+1),k<=temp_j)),(len(self.x),))
+            mask_remove = np.logical_and(mask_remove,mask_remove_temp)
+            self.x[temp_i+1] = self.x[temp_i]+ dx[temp_i]*st[(temp_i,temp_j,0)]
+            self.y[temp_i+1] = self.y[temp_i]+ dy[temp_i]*st[(temp_i,temp_j,0)]
+               
+        self.x = self.x[mask_remove]
+        self.y = self.y[mask_remove]   
 
 def load(file, wanted_time = None):
     """
