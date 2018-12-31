@@ -23,6 +23,7 @@ def init_surface(x):
     if par.INITIAL_SURFACE_TYPE == "Cosine":
         y[mask] = -50 * (1 + np.cos(2 * np.pi * (x[mask] - middle) / len))
     else:
-        raise ValueError("use of unimplemented Function")
+        #raise ValueError("use of unimplemented Function")
+        return y
     
     return y

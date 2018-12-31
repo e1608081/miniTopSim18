@@ -7,9 +7,7 @@ Created on Sun Dec 23 15:59:54 2018
 
 import parameters as par
 import numpy as np
-from scipy import special
-
-
+from scipy import special, constants
 
 
 class Beam:
@@ -19,11 +17,13 @@ class Beam:
         
         :param type: Beam type
         """
-        self.current = par.BEAM_CURRENT
+        self.current = par.BEAM_CURRENT * 1e9
+        #wz and wx are input in nm
         self.wz = par.SCAN_WIDTH
+        self.wx = par.ERF_BEAM_WIDTH
         self.xc = par.BEAM_CENTER
         self.sigma = self._sigma_from_fwhm(par.FWHM)
-        self.wx = par.ERF_BEAM_WIDTH
+        self.j = par.BEAM_CURRENT_DENSITY
         if type is None:
             self.type = par.BEAM_TYPE
         else:
@@ -49,8 +49,8 @@ class Beam:
         """
         exp_z = np.square(x - self.xc)
         exp_n = 2 * np.square(self.sigma)
-        exp = ( - (exp_z / exp_n))
-        const = self.current / (np.sqrt(2 * np.pi) * self.sigma * self.wz * np.e)
+        exp = np.exp(-(exp_z / exp_n))
+        const = self.current / (np.sqrt(2 * np.pi) * self.sigma * self.wz * constants.e)
         f_beam = const * exp
         return f_beam
     
@@ -64,10 +64,12 @@ class Beam:
         """
         x1 = self.xc - (self.wx / 2)
         x2 = self.xc + (self.wx / 2)
-        erf1 = np.exp( - (np.square(x - x2) / (2 * np.square(self.sigma))))
-        erf2 = np.exp( - (np.square(x - x1) / (2 * np.square(self.sigma))))
-        const = self.current / (2 * self.wx * self.wz)
-        f_beam = const * (special.erf(erf2) - special.erf(erf1))
+        erf1 = (- (x - x2) / (np.sqrt(2) * self.sigma))
+        erf2 = (- (x - x1) / (np.sqrt(2) * self.sigma))
+        const = self.current / (2 * self.wx * self.wz * constants.e)
+        erfcalc1 = special.erf(erf1)
+        erfcalc2 = special.erf(erf2)
+        f_beam = const * (erfcalc1 - erfcalc2)
         return f_beam
        
     
@@ -80,13 +82,12 @@ class Beam:
         """
         if self.type is 'Gaussian':
             return self._calculate_gauss(x)    
-        elif self.type is 'error function':
+        elif self.type is 'errorfunction':
             return self._calculate_erf(x)
         else:
             #use constant "broad beam" 
             # beam current density J = F_beam * e
-            j = par.BEAM_CURRENT_DENSITY
-            f_beam = j / np.e
+            f_beam = self.j / constants.e
             return f_beam
         
     

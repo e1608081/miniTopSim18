@@ -14,8 +14,8 @@ from scipy.constants import e
 
 import parameters as par
 from sputtering import sputter_yield
-import surface 
-
+import surface
+from beam import Beam
 
 def advance(surface, dtime):
     """Calculate coordinates after each step.
@@ -62,10 +62,12 @@ def get_velocities(surface, dtime):
         return par.ETCH_RATE * np.ones_like(surface.x)
     else:
         # beam current density J = F_beam * e
+        beam = Beam()
         J = par.BEAM_CURRENT_DENSITY
         N = par.DENSITY
 
-        F_beam = J / e
+        #F_beam = J / e
+        F_beam = beam(surface.x)
 
         normal_x, normal_y = surface.normal()
 

@@ -41,7 +41,7 @@ BEAM_CURRENT_DENSITY = (0.001, 'BEAM_CURRENT_DENSITY > 0.',
     The beam flux density can be calculated by F_beam = J/e, where e is the
     elementary charge.
     ''')
-BEAM_TYPE = ('constant', 'BEAM_TYPE in ("constant", "Gaussian", "error function",)',
+BEAM_TYPE = ('constant', 'BEAM_TYPE in ("constant", "Gaussian", "errorfunction",)',
 	'''Type of Beam Profile.
 	''')
 BEAM_CURRENT = (1e-9, 'BEAM_CURRENT > 0.',
@@ -54,7 +54,7 @@ SCAN_WIDTH = (1000., 'SCAN_WIDTH > 0.',
 BEAM_CENTER = (0., None,
 	'''Centerpoint of beam xc for non constant beam profiles.
 	''')
-FHWM = (100., 'FHWM > 0.',
+FWHM = (100., 'FWHM > 0.',
 	'''Full Width at half maximum FWHM [nm] for non constant beam profile.
 	''')
 ERF_BEAM_WIDTH = (1000., 'ERF_BEAM_WIDTH > 0.',
