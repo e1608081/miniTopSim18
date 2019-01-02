@@ -31,6 +31,11 @@ FUN_XMAX = (-25., 'FUN_XMAX <= XMAX and FUN_XMAX > FUN_XMIN',
 TIME_STEP = (1., 'TIME_STEP > 0.',
     '''Width of the time step.
     ''')
+TIME_INTEGRATION = ('normal', 'TIME_INTEGRATION in ("normal", "vertical")',
+    '''Method of the time integration
+    Sets the movement of a point in normal direction or vertical (parallel
+    to the y-axis)
+    ''')
 
 [Beam]
 TOTAL_TIME = (float, 'TOTAL_TIME > 0.',

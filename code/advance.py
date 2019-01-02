@@ -27,8 +27,13 @@ def advance(surface, dtime):
     normal_v = get_velocities(surface, dtime)
     normal_x, normal_y = surface.normal()
 
-    surface.x += dtime * normal_x * normal_v
-    surface.y += dtime * normal_y * normal_v
+    if par.TIME_INTEGRATION == 'normal':
+        surface.x += dtime * normal_x * normal_v
+        surface.y += dtime * normal_y * normal_v
+
+    if par.TIME_INTEGRATION == 'vertical':
+        surface.x = surface.x
+        surface.y += dtime * normal_v / normal_y
     
     surface.deloop()
     
