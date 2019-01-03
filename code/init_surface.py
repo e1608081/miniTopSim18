@@ -15,13 +15,40 @@ def init_surface(x):
     
     :param x: x values of surface
     """
-    mask = np.where(np.logical_and(np.array(x) > par.FUN_XMIN, np.array(x) < par.FUN_XMAX))
-    y = np.zeros(x.size)
     middle = (par.FUN_XMAX + par.FUN_XMIN) / 2
+
+    mask = np.where(np.logical_and(np.array(x) >= par.FUN_XMIN,
+                                   np.array(x) <= par.FUN_XMAX))
+    y = np.zeros_like(x)
+
     len = par.FUN_XMAX - par.FUN_XMIN
     
     if par.INITIAL_SURFACE_TYPE == "Cosine":
-        y[mask] = -50 * (1 + np.cos(2 * np.pi * (x[mask] - middle) / len))
+        y[mask] = par.FUN_PEAK_TO_PEAK / 2 * \
+                  (1 - np.cos(2 * np.pi * (x[mask] - par.FUN_XMIN) / len))
+
+    elif par.INITIAL_SURFACE_TYPE == 'DoubleCosine':
+        y[mask] = par.FUN_PEAK_TO_PEAK / 2 * \
+                  (1 - np.cos(4 * np.pi * (x[mask] - par.FUN_XMIN) / len))
+
+    elif par.INITIAL_SURFACE_TYPE == 'Step':
+        mask_left = np.where(np.array(x) < par.FUN_XMIN)
+        k = -par.FUN_PEAK_TO_PEAK/len
+
+        y[mask] = par.FUN_PEAK_TO_PEAK + k * (x[mask] - par.FUN_XMIN)
+        y[mask_left] = par.FUN_PEAK_TO_PEAK
+
+    elif par.INITIAL_SURFACE_TYPE == 'V-SHAPE':
+        mask1 = np.where(np.logical_and(np.array(x) >= par.FUN_XMIN,
+                                        np.array(x) <= middle))
+        mask2 = np.where(np.logical_and(np.array(x) > middle,
+                                        np.array(x) <= par.FUN_XMAX))
+        k1 = par.FUN_PEAK_TO_PEAK / (middle - par.FUN_XMIN)
+        k2 = -par.FUN_PEAK_TO_PEAK / (par.FUN_XMAX - middle)
+
+        y[mask1] = k1 * (x[mask1] - par.FUN_XMIN)
+        y[mask2] = par.FUN_PEAK_TO_PEAK + k2 * (x[mask2] - middle)
+
     else:
         raise ValueError("use of unimplemented Function")
     

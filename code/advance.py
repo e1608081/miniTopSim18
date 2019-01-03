@@ -32,7 +32,6 @@ def advance(surface, dtime):
         surface.y += dtime * normal_y * normal_v
 
     if par.TIME_INTEGRATION == 'vertical':
-        surface.x = surface.x
         surface.y += dtime * normal_v / normal_y
     
     surface.deloop()

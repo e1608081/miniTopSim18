@@ -23,11 +23,21 @@ class Surface:
         
         if time is None or xValues is None or yValues is None:
             #create a new object based on parameter database
-            num_points = (par.XMAX - par.XMIN) // par.DELTA_X + 1
-            self.x = np.linspace(int(par.XMIN), int(par.XMAX), int(num_points))
-            self.y = np.array(init_surface(self.x))
-            self.startx = deepcopy(self.x)
-            self.starty = deepcopy(self.y)
+
+            if par.INITIAL_SURFACE_FILE != '':
+                surface = load(par.INITIAL_SURFACE_FILE)
+                self.x = np.array(surface.x)
+                self.y = np.array(surface.y)
+                self.startx = deepcopy(self.x)
+                self.starty = deepcopy(self.y)
+
+            else:
+                num_points = (par.XMAX - par.XMIN) // par.DELTA_X + 1
+                self.x = np.linspace(int(par.XMIN), int(par.XMAX), int(num_points))
+                self.y = np.array(init_surface(self.x))
+                self.startx = deepcopy(self.x)
+                self.starty = deepcopy(self.y)
+
         else:
             #initial values given use them
             self.x = deepcopy(xValues)
