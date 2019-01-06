@@ -66,7 +66,6 @@ def get_velocities(surface, dtime):
         J = par.BEAM_CURRENT_DENSITY
         N = par.DENSITY
 
-        #F_beam = J / e
         F_beam = beam(surface.x)
 
         normal_x, normal_y = surface.normal()

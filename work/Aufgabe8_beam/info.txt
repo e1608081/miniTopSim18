@@ -1,0 +1,4 @@
+Using default values for current density from parameters.db resulted in less obvious differences, so i also included plots with 5 times the current(-density) 
+with simulation time of 10
+
+in addition, init_surface.py also needed slight changes as to enable the creation of a flat surface
