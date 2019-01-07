@@ -20,6 +20,11 @@ import surface
 def advance(surface, dtime):
     """Calculate coordinates after each step.
 
+    Use either normal or vertical calculation, according to the config.
+    'normal' moves the surface points in direction of the normal vector,
+    'vertical' uses only the y direction and leaves the x coordinate
+    fixed.
+
     :param surface: surface object
     :param dtime: timestep size
     """
@@ -31,7 +36,7 @@ def advance(surface, dtime):
         surface.x += dtime * normal_x * normal_v
         surface.y += dtime * normal_y * normal_v
 
-    if par.TIME_INTEGRATION == 'vertical':
+    elif par.TIME_INTEGRATION == 'vertical':
         surface.y += dtime * normal_v / normal_y
     
     surface.deloop()

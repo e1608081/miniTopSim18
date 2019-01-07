@@ -18,12 +18,13 @@ import parameters as par
 
 class Surface:
     
-    def __init__(self, time = None, xValues = None, yValues = None):
+    def __init__(self, time=None, xValues=None, yValues=None):
         """Init the object. Copy start value for printing."""
         
         if time is None or xValues is None or yValues is None:
-            #create a new object based on parameter database
+            # create a new object based on parameter database
 
+            # use the surface file if specified
             if par.INITIAL_SURFACE_FILE != '':
                 surface = load(par.INITIAL_SURFACE_FILE)
                 self.x = np.array(surface.x)
@@ -31,6 +32,7 @@ class Surface:
                 self.startx = deepcopy(self.x)
                 self.starty = deepcopy(self.y)
 
+            # if no surface file is specified, use the chosen surface type
             else:
                 num_points = (par.XMAX - par.XMIN) // par.DELTA_X + 1
                 self.x = np.linspace(int(par.XMIN), int(par.XMAX), int(num_points))
