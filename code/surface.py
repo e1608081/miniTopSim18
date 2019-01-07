@@ -220,7 +220,55 @@ class Surface:
                                    self.y[:i] < self.y[i]), 
                     self.x[i], 
                     self.x[:i])
-    
+
+    def calc_viewfactor(self):
+        """Calculates the view-factor from surface parameters
+
+        :return: nxn matrix representing the view-factor
+        """
+        # create arrays for nodes i & j (j is transposed)
+        x_i = np.ones(shape=(self.x.size, self.x.size)) * self.x
+        y_i = np.ones(shape=(self.y.size, self.y.size)) * self.y
+
+        x_j = np.ones_like(x_i) * self.x[:, np.newaxis]
+        y_j = np.ones_like(y_i) * self.y[:, np.newaxis]
+
+        # calculate distances between nodes i & j
+        x_ij = x_i - x_j
+        y_ij = y_i - y_j
+
+        # create arrays for the normal vectors of nodes i & j (j is transposed)
+        x_normal, y_normal = self.normal()
+        x_i_normal = np.ones_like(x_i) * x_normal
+        y_i_normal = np.ones_like(y_i) * y_normal
+        x_j_normal = np.ones_like(x_j) * x_normal[:, np.newaxis]
+        y_j_normal = np.ones_like(y_j) * y_normal[:, np.newaxis]
+
+        # calculate cosines of angles (cos_a, cos_b)
+        # deactivate warnings when division by zero -> is covered with np.nan_to_num
+        with np.errstate(divide='ignore', invalid='ignore'):
+            cos_a = np.nan_to_num((x_j_normal*x_ij + y_j_normal*y_ij) / (np.sqrt(x_j_normal**2+y_j_normal**2) * np.sqrt(x_ij**2+y_ij**2)))
+            cos_b = np.nan_to_num((x_i_normal*x_ij + y_i_normal*y_ij) / (np.sqrt(x_i_normal**2+y_i_normal**2) * np.sqrt(x_ij**2+y_ij**2)))
+
+        # calculate distances between nodes i & j (d_ij)
+        d_ij = np.sqrt(x_ij ** 2 + y_ij ** 2)
+
+        # calculate surface length of node (delta_l)
+        x = np.concatenate(([self.x[0]-1], self.x, [self.x[-1]+1]))
+        y = np.concatenate(([self.y[0]], self.y, [self.y[-1]]))
+        d_x = x[1:] - x[:-1]
+        d_y = y[1:] - y[:-1]
+        d_l = np.sqrt(d_x**2 + d_y**2)
+        d_l_avg = (d_l[1:]+d_l[:-1]) / 2
+        delta_l = np.ones_like(x_i) * d_l_avg
+
+        # calculate view-factor and mask out all values where cos_a<0 and cos_b<0 and all elements on diagonal
+        # deactivate warnings when division by zero ->is covered with np.nan_to_num
+        with np.errstate(divide='ignore', invalid='ignore'):
+            f_ij = np.nan_to_num((cos_a * cos_b * delta_l) / (2 * d_ij))
+        mask = (cos_a > np.zeros_like(x_i)) * (cos_b > np.zeros_like(x_i)) * (np.ones_like(x_i) - np.eye(self.x.size))
+        return f_ij * mask
+
 
 def load(file, wanted_time = None):
     """

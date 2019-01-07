@@ -2,6 +2,9 @@
 ETCHING = (True, None,
     '''Flag selecting the simulation mode between etching and sputtering.
     ''')
+REDEP = (False, None,
+    '''Enable or Disable Redeposition
+    ''')
 
 [Initial Conditions]
 XMIN = (-50., None,
