@@ -27,15 +27,10 @@ class Beam:
         self.wz = par.SCAN_WIDTH
         self.wx = par.ERF_BEAM_WIDTH
         self.xc = par.BEAM_CENTER
-        # when using error function, fwhm equals the beamwidth
-        if self.type is 'error_function':
-            self.sigma = self._sigma_from_fwhm(self.wx)
-        else:
-            self.sigma = self._sigma_from_fwhm(par.FWHM)
-
+        self.sigma = self.__sigma_from_fwhm(par.FWHM)
         self.j = par.BEAM_CURRENT_DENSITY
 
-    def _sigma_from_fwhm(self, fwhm):
+    def __sigma_from_fwhm(self, fwhm):
         """Calculates standard deviation from fwhm.
         
         :param fwhm: fwhm
@@ -44,12 +39,12 @@ class Beam:
         """
         return fwhm / np.sqrt(8 * np.log(2))
 
-    def _calculate_gauss(self, x):
+    def __calculate_gauss(self, x):
         """Calculates beam flux density based on gaussian distribution.
+
+        :param x: position on x axis in nm
         
-        :param x: position on x axis
-        
-        :returns: beam flux density
+        :returns: beam flux density in Atoms/cm^2
         """
         exp_z = np.square(x - self.xc)
         exp_n = 2 * np.square(self.sigma)
@@ -59,12 +54,12 @@ class Beam:
         f_beam = const * exp
         return f_beam
 
-    def _calculate_erf(self, x):
+    def __calculate_erf(self, x):
         """Calculates beam flux density based on error function.
         
-        :param x: position on x axis
+        :param x: position on x axis in nm
         
-        :returns: beam flux density
+        :returns: beam flux density in Atoms/cm^2
         """
         x1 = self.xc - (self.wx / 2)
         x2 = self.xc + (self.wx / 2)
@@ -85,9 +80,9 @@ class Beam:
         :returns: beam flux density
         """
         if self.type is 'Gaussian':
-            return self._calculate_gauss(x)
+            return self.__calculate_gauss(x)
         elif self.type is 'error_function':
-            return self._calculate_erf(x)
+            return self.__calculate_erf(x)
         else:
             # use constant "broad beam"
             # beam current density J = F_beam * e
