@@ -11,6 +11,7 @@ Module functions:
 
 import numpy as np
 from scipy.constants import e
+from scipy.spatial.distance import cdist
 
 import parameters as par
 from sputtering import sputter_yield
@@ -20,6 +21,11 @@ import surface
 def advance(surface, dtime):
     """Calculate coordinates after each step.
 
+    Use either normal or vertical calculation, according to the config.
+    'normal' moves the surface points in direction of the normal vector,
+    'vertical' uses only the y direction and leaves the x coordinate
+    fixed.
+
     :param surface: surface object
     :param dtime: timestep size
     """
@@ -27,8 +33,12 @@ def advance(surface, dtime):
     normal_v = get_velocities(surface, dtime)
     normal_x, normal_y = surface.normal()
 
-    surface.x += dtime * normal_x * normal_v
-    surface.y += dtime * normal_y * normal_v
+    if par.TIME_INTEGRATION == 'normal':
+        surface.x += dtime * normal_x * normal_v
+        surface.y += dtime * normal_y * normal_v
+
+    elif par.TIME_INTEGRATION == 'vertical':
+        surface.y += dtime * normal_v / normal_y
     
     surface.deloop()
     
@@ -108,10 +118,15 @@ def get_velocities(surface, dtime):
                 else:
                     lastx = surface.x[i]
 
-        v_normal = F_sput / N
+        if par.REDEP is True:
+            viewfactor = surface.calc_viewfactor()
+            F_redep = viewfactor.dot(F_sput)
+        else:
+            F_redep = 0
+
+        v_normal = (F_sput - F_redep) / N
 
         # convert units from cm/s to nm/s
         v_normal = v_normal * 1e7
 
         return v_normal
-

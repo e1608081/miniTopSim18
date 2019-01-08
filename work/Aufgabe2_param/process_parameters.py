@@ -37,6 +37,7 @@ def _write_output(output_file):
     section = 'Setup'
     cfg.add_section(section)
     cfg.set(section, 'ETCHING', str(par.ETCHING))
+    cfg.set(section, 'REDEP', str(par.REDEP))
     
     section = 'Initial Conditions'
     cfg.add_section(section)
