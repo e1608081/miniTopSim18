@@ -11,6 +11,7 @@ Module functions:
 
 import numpy as np
 from scipy.constants import e
+from scipy.spatial.distance import cdist
 
 import parameters as par
 from sputtering import sputter_yield
@@ -117,10 +118,15 @@ def get_velocities(surface, dtime):
                 else:
                     lastx = surface.x[i]
 
-        v_normal = F_sput / N
+        if par.REDEP is True:
+            viewfactor = surface.calc_viewfactor()
+            F_redep = viewfactor.dot(F_sput)
+        else:
+            F_redep = 0
+
+        v_normal = (F_sput - F_redep) / N
 
         # convert units from cm/s to nm/s
         v_normal = v_normal * 1e7
 
         return v_normal
-
