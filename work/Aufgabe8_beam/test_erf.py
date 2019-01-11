@@ -1,6 +1,5 @@
 
 
-
 def test_erf():
     import os
     import sys
@@ -13,11 +12,11 @@ def test_erf():
     import plot_beam
     import surface as surf
     import parameters as par
-    import plot
 
-    config_file = 'erf.cfg'
+    config_file = os.path.join(dirname, 'erf.cfg')
     par.set_parameters(config_file)
 
+    # cfg overwrites
     par.INITIAL_SURFACE_TYPE = 'Flat'
     # par.TOTAL_TIME = 1000
     # par.BEAM_CURRENT = 1e-12
@@ -25,13 +24,11 @@ def test_erf():
     # par.XMIN = -100
     filename, surface = plot_beam.simulate(config_file, False)
 
-    srf = plot.loadFile(filename)
     if os.path.isfile(filename + '_save'):
-        srf_save = plot.loadFile(filename + '_save')
+        surface_save = surf.load(filename + '_save')
 
     else:
         raise FileNotFoundError(filename + '_save not found')
 
-    surface_save = surf.load(filename + '_save')
     distance = surface.distance(surface_save)
     assert distance < 0.00292933136297
