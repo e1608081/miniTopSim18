@@ -1,45 +1,37 @@
-import os
 
-import plot_beam
-import matplotlib.pyplot as plt
-import surface as surf
-import parameters as par
-import plot
 
-config_file = 'gauss.cfg'
-par.set_parameters(config_file)
 
-par.INITIAL_SURFACE_TYPE = 'Flat'
-par.TOTAL_TIME = 1000
-par.BEAM_CURRENT = 1e-12
-par.XMAX = 100
-par.XMIN = -100
-filename, surface = plot_beam.simulate(config_file, False)
+def test_gauss():
+    import os
+    import sys
 
-srf = plot.loadFile(filename)
-if os.path.isfile(filename + '_save'):
-    srf_save = plot.loadFile(filename + '_save')
+    dirname = os.path.dirname(os.path.abspath(__file__))
+    main_dir = os.path.join(dirname, os.path.pardir, os.path.pardir)
+    code_dir = os.path.join(main_dir, "code")
+    sys.path.insert(0, code_dir)
 
-else:
-    raise FileNotFoundError(filename + '_save not found')
+    import plot_beam
+    import surface as surf
+    import parameters as par
+    import plot
 
-surface_save = surf.load(filename + '_save')
-distance = surface.distance(surface_save)
-print('Distance between surface is ' + str(distance))
-# assert distance < 0.00292933136297
+    config_file = 'gauss.cfg'
+    par.set_parameters(config_file)
 
-surface_final = srf[-1]
-surface_final_save = srf_save[-1]
-xValues = surface_final["xVals"]
-yValues = surface_final["yVals"]
-xValues_save = surface_final_save["xVals"]
-yValues_save = surface_final_save["yVals"]
-plt.grid(True, 'major')
-plt.xlabel('x-values in nm')
-plt.ylabel('y-values in nm')
+    par.INITIAL_SURFACE_TYPE = 'Flat'
+    # par.TOTAL_TIME = 1000
+    # par.BEAM_CURRENT = 1e-12
+    # par.XMAX = 100
+    # par.XMIN = -100
+    filename, surface = plot_beam.simulate(config_file, False)
 
-plt.plot(xValues, yValues, label='new calculation')
-plt.plot(xValues_save, yValues_save, label='saved file')
-plt.legend()
-plt.show()
+    srf = plot.loadFile(filename)
+    if os.path.isfile(filename + '_save'):
+        srf_save = plot.loadFile(filename + '_save')
 
+    else:
+        raise FileNotFoundError(filename + '_save not found')
+
+    surface_save = surf.load(filename + '_save')
+    distance = surface.distance(surface_save)
+    assert distance < 0.00292933136297

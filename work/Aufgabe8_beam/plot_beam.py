@@ -1,5 +1,5 @@
 import sys
-import os
+import time
 
 import advance as adv
 import parameters as par
@@ -8,6 +8,7 @@ import miniTopSim
 import plot
 from sputtering import init_sputtering
 from surface import Surface
+
 
 
 def simulate(config_file, setconfig=True):
@@ -50,9 +51,16 @@ def simulate(config_file, setconfig=True):
 
 if __name__ == "__main__":
 
+    time_start = time.process_time()
+    print("This process can take some time depending on config")
     filename_const, surface_const = simulate('constant.cfg')
+    print("Constant surface done")
     filename_gauss, surface_gauss = simulate('gauss.cfg')
+    print("Gaussian surface done")
     filename_erf, surface_erf = simulate('erf.cfg')
+    print("Erf surface done")
+    time_used = time.process_time() - time_start
+    print("Computing time = " + str(time_used))
 
     srf_const = plot.loadFile(filename_const)
     srf_gauss = plot.loadFile(filename_gauss)

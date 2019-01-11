@@ -15,7 +15,8 @@ from scipy.spatial.distance import cdist
 
 import parameters as par
 from sputtering import sputter_yield
-import surface 
+import surface
+from beam import Beam
 
 
 def advance(surface, dtime):
@@ -71,11 +72,10 @@ def get_velocities(surface, dtime):
         # If etching is used
         return par.ETCH_RATE * np.ones_like(surface.x)
     else:
-        # beam current density J = F_beam * e
-        J = par.BEAM_CURRENT_DENSITY
         N = par.DENSITY
 
-        F_beam = J / e
+        beam = Beam()
+        F_beam = beam(surface.x)
 
         normal_x, normal_y = surface.normal()
 

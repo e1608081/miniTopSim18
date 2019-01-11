@@ -58,6 +58,11 @@ def init_surface(x):
         y[mask1] = k1 * (x[mask1] - par.FUN_XMIN)
         y[mask2] = par.FUN_PEAK_TO_PEAK + k2 * (x[mask2] - middle)
 
+    elif par.INITIAL_SURFACE_TYPE is 'Flat':
+        # y was already initialized to all 0
+        return y
+
+
     else:
         raise ValueError("use of unimplemented Function")
     
