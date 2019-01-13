@@ -17,7 +17,7 @@ from init_surface import init_surface
 import parameters as par
 
 class Surface:
-    
+
     def __init__(self, time = None, xValues = None, yValues = None):
         """Init the object. Copy start value for printing."""
         
@@ -226,35 +226,38 @@ class Surface:
 
         :return: nxn matrix representing the view-factor
         """
-        # create arrays for nodes i & j (j is transposed)
-        x_i = np.ones(shape=(self.x.size, self.x.size)) * self.x
-        y_i = np.ones(shape=(self.y.size, self.y.size)) * self.y
+        # create arrays for nodes i & j (j has equal rows, i has equal columns)
+        x_j = np.ones(shape=(self.x.size, self.x.size)) * self.x
+        y_j = np.ones(shape=(self.y.size, self.y.size)) * self.y
 
-        x_j = np.ones_like(x_i) * self.x[:, np.newaxis]
-        y_j = np.ones_like(y_i) * self.y[:, np.newaxis]
+        x_i = x_j.transpose()
+        y_i = y_j.transpose()
+
+        print("x_i: {}".format(x_i[0]))
+        print("x_j: {}".format(x_j[0]))
 
         # calculate distances between nodes i & j
         x_ij = x_i - x_j
         y_ij = y_i - y_j
 
-        # create arrays for the normal vectors of nodes i & j (j is transposed)
+        # create arrays for the normal vectors of nodes i & j (j has equal rows, i has equal columns)
         x_normal, y_normal = self.normal()
-        x_i_normal = np.ones_like(x_i) * x_normal
-        y_i_normal = np.ones_like(y_i) * y_normal
-        x_j_normal = np.ones_like(x_j) * x_normal[:, np.newaxis]
-        y_j_normal = np.ones_like(y_j) * y_normal[:, np.newaxis]
+        x_i_normal = np.ones_like(x_i) * -x_normal[:, np.newaxis]
+        y_i_normal = np.ones_like(y_i) * -y_normal[:, np.newaxis]
+        x_j_normal = np.ones_like(x_j) * -x_normal
+        y_j_normal = np.ones_like(y_j) * -y_normal
 
-        # calculate cosines of angles (cos_a, cos_b)
+        # calculate cosines of angles (cos_a, cos_b) with [(a*b)/(|a|*|b|)]
         # deactivate warnings when division by zero -> is covered with np.nan_to_num
         with np.errstate(divide='ignore', invalid='ignore'):
             cos_a = np.nan_to_num((x_j_normal*x_ij + y_j_normal*y_ij) / (np.sqrt(x_j_normal**2+y_j_normal**2) * np.sqrt(x_ij**2+y_ij**2)))
-            cos_b = np.nan_to_num((x_i_normal*x_ij + y_i_normal*y_ij) / (np.sqrt(x_i_normal**2+y_i_normal**2) * np.sqrt(x_ij**2+y_ij**2)))
+            cos_b = np.nan_to_num((x_i_normal*-x_ij + y_i_normal*-y_ij) / (np.sqrt(x_i_normal**2+y_i_normal**2) * np.sqrt(x_ij**2+y_ij**2)))
 
         # calculate distances between nodes i & j (d_ij)
         d_ij = np.sqrt(x_ij ** 2 + y_ij ** 2)
 
         # calculate surface length of node (delta_l)
-        x = np.concatenate(([self.x[0]-1], self.x, [self.x[-1]+1]))
+        x = np.concatenate(([2*self.x[0]-self.x[1]], self.x, [3*self.x[-1]-self.x[-2]]))
         y = np.concatenate(([self.y[0]], self.y, [self.y[-1]]))
         d_x = x[1:] - x[:-1]
         d_y = y[1:] - y[:-1]
@@ -266,7 +269,7 @@ class Surface:
         # deactivate warnings when division by zero ->is covered with np.nan_to_num
         with np.errstate(divide='ignore', invalid='ignore'):
             f_ij = np.nan_to_num((cos_a * cos_b * delta_l) / (2 * d_ij))
-        mask = (cos_a > np.zeros_like(x_i)) * (cos_b > np.zeros_like(x_i)) * (np.ones_like(x_i) - np.eye(self.x.size))
+        mask = (cos_a > np.zeros_like(x_i)) * (cos_b > np.zeros_like(x_i)) * np.invert(np.eye(self.x.size, dtype=bool))
         return f_ij * mask
 
 
