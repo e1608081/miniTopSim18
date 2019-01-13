@@ -16,23 +16,44 @@ XMAX = (50., 'XMAX > XMIN',
 DELTA_X = (1., 'DELTA_X > 0.',
     '''Increment of x values of the initial surface.
     ''')
-INITIAL_SURFACE_TYPE = ('Cosine', 'INITIAL_SURFACE_TYPE in ("Cosine",)',
+INITIAL_SURFACE_TYPE = ('Cosine',
+    'INITIAL_SURFACE_TYPE in ("Cosine", "DoubleCosine", "Step", "V-SHAPE", "Flat")',
     '''Initial surface type.
+    Cosine: One period of a cosine function.
+    DoubleCosine: Two periods of a cosine function.
+    Step: Ramp with or without tilt angle, depending if
+    FUN_XMIN == FUN_XMAX or FUN_XMIN < FUN_XMAX.
+    V-SHAPE: Symmetrical V-profile.
     ''')
 FUN_XMIN = (-25., 'FUN_XMIN >= XMIN',
     '''Lower boundary of initial surface function.
     For XMIN < x < FUN_XMIN the surface function is assumed to be constant
     and equal to its value at x = FUN_XMIN.
     ''')
-FUN_XMAX = (-25., 'FUN_XMAX <= XMAX and FUN_XMAX > FUN_XMIN',
+FUN_XMAX = (-25., 'FUN_XMIN < FUN_XMAX <= XMAX',
     '''Lower boundary of initial surface function.
     For XMIN < x < FUN_XMIN the surface function is assumed to be constant
     and equal to its value at x = FUN_XMIN.
+    ''')
+FUN_PEAK_TO_PEAK = (-100., None,
+    '''Amplitude of the Surface in relation to y = 0.
+    Negative Values mean negative displacement in y-direction,
+    default of 0. means a flat horizontal surface.
+    ''')
+INITIAL_SURFACE_FILE = ('', None,
+    '''Path to a srf-file for surface initialization.
+    Use the given file to initialize the surface, if the path is empty,
+    use INITIAL_SURFACE_TYPE.
     ''')
 
 [Numerics]
 TIME_STEP = (1., 'TIME_STEP > 0.',
     '''Width of the time step.
+    ''')
+TIME_INTEGRATION = ('normal', 'TIME_INTEGRATION in ("normal", "vertical")',
+    '''Method of the time integration.
+    Sets the movement of a point in normal direction or vertical (parallel
+    to the y-axis).
     ''')
 
 [Beam]
@@ -44,6 +65,25 @@ BEAM_CURRENT_DENSITY = (0.001, 'BEAM_CURRENT_DENSITY > 0.',
     The beam flux density can be calculated by F_beam = J/e, where e is the
     elementary charge.
     ''')
+BEAM_TYPE = ('constant', 'BEAM_TYPE in ("constant", "Gaussian", "error_function",)',
+	'''Type of Beam Profile.
+	''')
+BEAM_CURRENT = (1e-9, 'BEAM_CURRENT > 0.',
+	'''Beam Current I [A] for non constant bream profiles.If beam profile
+	is constant, BEAM_CURRENT_DENSITY will be used instead.
+	''')
+SCAN_WIDTH = (1000., 'SCAN_WIDTH > 0.',
+	''' Scanwidth Wz [nm] in z-direction for non constant beam profiles.
+	''')
+BEAM_CENTER = (0., None,
+	'''Centerpoint of beam xc for non constant beam profiles.
+	''')
+FWHM = (100., 'FWHM > 0.',
+	'''Full Width at half maximum FWHM [nm] for non constant beam profile.
+	''')
+ERF_BEAM_WIDTH = (1000., 'ERF_BEAM_WIDTH > 0.',
+	'''Scanwidth Wx [nm] in x-direction for eror fucntion profiles.
+	''')
 
 [Physics]
 ETCH_RATE = (1., 'ETCH_RATE > 0.',

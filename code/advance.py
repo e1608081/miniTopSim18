@@ -15,11 +15,17 @@ from scipy.spatial.distance import cdist
 
 import parameters as par
 from sputtering import sputter_yield
-import surface 
+import surface
+from beam import Beam
 
 
 def advance(surface, dtime):
     """Calculate coordinates after each step.
+
+    Use either normal or vertical calculation, according to the config.
+    'normal' moves the surface points in direction of the normal vector,
+    'vertical' uses only the y direction and leaves the x coordinate
+    fixed.
 
     :param surface: surface object
     :param dtime: timestep size
@@ -28,8 +34,12 @@ def advance(surface, dtime):
     normal_v = get_velocities(surface, dtime)
     normal_x, normal_y = surface.normal()
 
-    surface.x += dtime * normal_x * normal_v
-    surface.y += dtime * normal_y * normal_v
+    if par.TIME_INTEGRATION == 'normal':
+        surface.x += dtime * normal_x * normal_v
+        surface.y += dtime * normal_y * normal_v
+
+    elif par.TIME_INTEGRATION == 'vertical':
+        surface.y += dtime * normal_v / normal_y
     
     surface.deloop()
     
@@ -62,11 +72,10 @@ def get_velocities(surface, dtime):
         # If etching is used
         return par.ETCH_RATE * np.ones_like(surface.x)
     else:
-        # beam current density J = F_beam * e
-        J = par.BEAM_CURRENT_DENSITY
         N = par.DENSITY
 
-        F_beam = J / e
+        beam = Beam()
+        F_beam = beam(surface.x)
 
         normal_x, normal_y = surface.normal()
 
