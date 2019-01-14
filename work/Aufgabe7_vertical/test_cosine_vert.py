@@ -16,4 +16,4 @@ def test_cosine_vert():
     saved = surface.load(os.path.join(filedir, 'cosine_vert.srf_save'))
     simulated = miniTopSim.simulate(os.path.join(filedir, 'cosine_vert.cfg'), False)
 
-    assert simulated.distance(saved) < 0.00292933136297
+    assert simulated.distance(saved) == 0.
