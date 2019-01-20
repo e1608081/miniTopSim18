@@ -18,10 +18,10 @@ def test_erf():
 
     # cfg overwrites
     par.INITIAL_SURFACE_TYPE = 'Flat'
-    # par.TOTAL_TIME = 1000
+    par.TOTAL_TIME = 1
     # par.BEAM_CURRENT = 1e-12
-    # par.XMAX = 100
-    # par.XMIN = -100
+    par.XMAX = 500
+    par.XMIN = -500
     filename, surface = plot_beam.simulate(config_file, False)
 
     if os.path.isfile(filename + '_save'):
