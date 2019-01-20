@@ -16,14 +16,14 @@ from surface import Surface
 def simulate(config_file, do_plotting=True):
     """
     Performs a simulation with the parameters given inside the config file
-    
+
         :param config_file: parameters for simulation
-        
+
         :return the surface object after last simulation step
     """
-    
+
     time_start = clock()
-    
+
     try:
         par.set_parameters(config_file)
     except FileNotFoundError as err:
@@ -33,31 +33,31 @@ def simulate(config_file, do_plotting=True):
     config = "config"
     if(config_file.find(".cfg") != -1):
         config = config_file.replace(".cfg","")
-        
+
     tend = float(par.TOTAL_TIME)
     dt = float(par.TIME_STEP)
     time = 0
-    
+
     init_sputtering()
     surface = Surface()
     surface_filename = '{}.srf'.format(config)
-    surface.write(surface_filename, time, 'w')    
-         
+    surface.write(surface_filename, time, 'w')
+
     while time < tend:
         adv.advance(surface,dt)
         dt = adv.timestep(dt, time, tend)
         time += dt
         surface.write(surface_filename, time, 'a')
-    
+
     time_compute = clock() - time_start
     print("Computing Time = " + str(time_compute))
-    
+
     if par.PLOT_SURFACE and do_plotting:
         if os.path.isfile(surface_filename + "_save"):
             plot.plot(surface_filename, surface_filename + "_save")
         else:
             plot.plot(surface_filename)
-    
+
     return surface
 
 if __name__ == "__main__":

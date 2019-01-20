@@ -84,6 +84,25 @@ FWHM = (100., 'FWHM > 0.',
 ERF_BEAM_WIDTH = (1000., 'ERF_BEAM_WIDTH > 0.',
 	'''Scanwidth Wx [nm] in x-direction for eror fucntion profiles.
 	''')
+SCAN_TYPE = ('None', 'SCAN_TYPE in ("None", "raster", "serpentine", "stream file",)',
+    '''Scanmode, if none scanning is turned off.
+    ''')
+DWELL_TIME = (1., 'DWELL_TIME > 0.',
+    '''Time in which the Beam stays on one spot.
+    ''')
+PIXEL_SPACING = (0., 'PIXEL_SPACING >= 0.',
+    '''Distance between two scanned pixels.
+    ''')
+N_PIXELS = (1. , 'N_PIXELS > 0',
+    '''Number of scanned pixels.
+    ''')
+N_SCANS = (1. , 'N_SCANS > 0',
+    '''Number of scanning passes.
+    ''')
+STREAM_FILE = ('' , None,
+    '''Name of the Stream File in which the dwell time and pixel spacing are
+    defined.
+    ''')
 
 [Physics]
 ETCH_RATE = (1., 'ETCH_RATE > 0.',
