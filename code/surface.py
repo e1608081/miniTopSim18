@@ -383,7 +383,6 @@ class Surface:
         #self.y = np.delete(self.y, remove_mask)
         # Angle
         #return
->>>>>>> refs/remotes/origin/master
 
 def load(file, wanted_time = None):
     """
