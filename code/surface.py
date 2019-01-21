@@ -8,8 +8,9 @@ Class functions:
     write(file, time): writes output file
 """
 
-
+import sys
 import numpy as np
+import scipy.interpolate
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
@@ -339,6 +340,50 @@ class Surface:
         mask = (cos_a > np.zeros_like(x_i)) * (cos_b > np.zeros_like(x_i)) * np.invert(np.eye(self.x.size, dtype=bool))
         return f_ij * mask
 
+    def adapt(self, interpol_type='linear'):
+        """"Adds or removes nodes to keep surface length and normal vector angle near constant"""
+
+        # Node interpolation
+        x_dist = np.abs(self.x[1:]-self.x[:-1])
+        if np.any(x_dist < 0):
+            sys.exit()
+        y_dist = np.abs(self.y[1:]-self.y[:-1])
+        # prepend zero to match dist index to node index
+        dist = np.insert(np.sqrt(np.square(x_dist) + np.square(y_dist)), 0, 0)
+        dist_index, = np.where(dist > par.MAX_SEGLEN)
+        num_insert_nodes = np.int32(np.ceil(dist[dist_index] / par.MAX_SEGLEN))
+        new_points = np.split(self.x, dist_index)
+        # TODO exchange for lambda expression?
+        for i in range(len(dist_index)):
+            line = np.linspace(self.x[dist_index[i] - 1],
+                               self.x[dist_index[i]],
+                               num_insert_nodes[i],
+                               endpoint=False)
+            line = np.delete(line, 0)
+            new_points[i] = np.append(new_points[i], line)
+        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'linear')
+        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'quadratic')
+        interpolate = scipy.interpolate.interp1d(self.x, self.y, interpol_type)
+        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'cubic')
+        self.x = np.concatenate(new_points)
+        self.y = interpolate(self.x)
+
+        # Node removal
+        x_dist2 = np.abs(self.x[2:]-self.x[:-2])
+        y_dist2 = np.abs(self.y[2:]-self.y[:-2])
+        dist2 = np.insert(np.sqrt(x_dist2**2 + y_dist2**2), (0,1) , 0)
+        remove_mask = np.where(dist2 < par.MAX_SEGLEN)
+        #remove_mask = (self.x[2:] - self.x[:-2]) < par.MAX_SEGLEN
+        print('Mask:\n',remove_mask)
+        #remove_mask = np.insert(remove_mask, (0, -1), True)
+
+        #self.x = self.x[remove_mask]
+        #self.y = self.y[remove_mask]
+        #self.x = np.delete(self.x, remove_mask)
+        #self.y = np.delete(self.y, remove_mask)
+        # Angle
+        #return
+>>>>>>> refs/remotes/origin/master
 
 def load(file, wanted_time = None):
     """

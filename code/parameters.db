@@ -55,6 +55,15 @@ TIME_INTEGRATION = ('normal', 'TIME_INTEGRATION in ("normal", "vertical", "chara
     Sets the movement of a point in normal direction or vertical (parallel
     to the y-axis).
     ''')
+ADAPTIVE_GRID = (True, None,
+    '''Enable or disable adaptive grid
+    ''')
+MAX_SEGLEN = (2., 'MAX_SEGLEN > 0',
+    '''maximum allowed distance between neighboring grid points
+    ''')
+MAX_ANGLE = (10, None,
+    '''maximum allowed angle of neighboring surface normals in degrees
+    ''')
 
 [Beam]
 TOTAL_TIME = (float, 'TOTAL_TIME > 0.',

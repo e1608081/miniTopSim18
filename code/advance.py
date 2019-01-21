@@ -55,6 +55,9 @@ def advance(surface, dtime):
     surface.deloop()
     surface.eliminate_overhangs()
 
+    if par.ADAPTIVE_GRID is True:
+        surface.adapt()
+
 def timestep(dtime, time, endTime):
     """Get next possible timestep.
 
