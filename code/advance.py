@@ -14,7 +14,7 @@ from scipy.constants import e
 from scipy.spatial.distance import cdist
 
 import parameters as par
-from sputtering import sputter_yield
+from sputtering import sputter_yield, sputter_yield_derivative
 import surface
 from beam import Beam
 
@@ -31,7 +31,7 @@ def advance(surface, dtime):
     :param dtime: timestep size
     """
 
-    normal_v = get_velocities(surface, dtime)
+    normal_v, d_normal_v = get_velocities(surface, dtime)
     normal_x, normal_y = surface.normal()
 
     if par.TIME_INTEGRATION == 'normal':
@@ -40,10 +40,23 @@ def advance(surface, dtime):
 
     elif par.TIME_INTEGRATION == 'vertical':
         surface.y += dtime * normal_v / normal_y
-    
+
+    elif par.TIME_INTEGRATION == 'characteristics':
+        theta = np.arccos(-np.minimum(normal_y, 0.))
+        #theta is positiv if the slope is positiv
+        theta = np.copysign(theta, normal_x)
+
+        v_x = normal_v * np.sin(theta) + d_normal_v * np.cos(theta)
+        v_y = -normal_v * np.cos(theta) + d_normal_v * np.sin(theta)
+
+        surface.x += v_x * dtime
+        surface.y += v_y * dtime
+
     surface.deloop()
-    
     surface.eliminate_overhangs()
+
+    if par.ADAPTIVE_GRID is True:
+        surface.adapt()
 
 def timestep(dtime, time, endTime):
     """Get next possible timestep.
@@ -59,18 +72,18 @@ def timestep(dtime, time, endTime):
 
 
 def get_velocities(surface, dtime):
-    """ Calculates the surface velocity depending on [SETUP] ETCHING.
+    """ Calculates the surface velocity and derivatve depending on [SETUP] ETCHING.
 
     In case of sputtering the angle between the beam direction and surface
     normal is calculated and then the sputter_yield() function is called
     from the sputterung-module.
 
-    :return: surface velocity [unit: nm/s]
+    :return: tuple of surface velocity [unit: nm/s] and the derivative
     """
 
     if par.ETCHING is True:
         # If etching is used
-        return par.ETCH_RATE * np.ones_like(surface.x)
+        return par.ETCH_RATE * np.ones_like(surface.x), 0
     else:
         N = par.DENSITY
 
@@ -80,43 +93,14 @@ def get_velocities(surface, dtime):
         normal_x, normal_y = surface.normal()
 
         theta = np.arccos(-np.minimum(normal_y, 0.))
+        #theta is positiv if the slope is positiv
+        theta = np.copysign(theta, normal_x)
 
         Y_s = sputter_yield(theta)
 
         # F_sput = F_beam * Y_s(theta) * cos(theta)
         F_sput = F_beam * Y_s * np.cos(theta)
 
-        if False:
-            # remove overhanging structures
-            lastx = surface.x[0]
-            for i in range(1, surface.x.size-1):
-                if surface.x[i] < 0. and surface.x[i] < lastx:
-                    if surface.y[i] <= surface.y[i-1]:
-                        # shadowed point
-                        F_sput[i] = 0
-                    else:
-                        # point that shadow the last point
-                        if surface.y[i] > np.max(surface.y):
-                            # update lastx to the current point
-                            lastx = surface.x[i]
-                        F_sput[i-1] = 0
-                else:
-                    lastx = surface.x[i]
-
-            lastx = surface.x[-1]
-            for i in range(-2, -surface.x.size+1, -1):
-                if surface.x[i] > 0. and surface.x[i] > lastx:
-                    if surface.y[i] <= surface.y[i+1]:
-                        # shadowed point
-                        F_sput[i] = 0
-                    else:
-                        # point that shadow the last point
-                        if surface.y[i] > np.max(surface.y):
-                            # update lastx to the current point
-                            lastx = surface.x[i]
-                        F_sput[i+1] = 0
-                else:
-                    lastx = surface.x[i]
 
         if par.REDEP is True:
             viewfactor = surface.calc_viewfactor()
@@ -129,4 +113,20 @@ def get_velocities(surface, dtime):
         # convert units from cm/s to nm/s
         v_normal = v_normal * 1e7
 
-        return v_normal
+
+        #claculate derivative
+        dY_s = sputter_yield_derivative(theta)
+        dF_sput = F_beam * (dY_s * np.cos(theta) - Y_s * np.sin(theta))
+
+        if par.REDEP is True:
+            viewfactor = surface.calc_viewfactor_derivative()
+            dF_redep = viewfactor.dot(F_sput)
+        else:
+            dF_redep = 0
+
+        d_v_normal = (dF_sput - dF_redep) / N
+        # convert units from cm/s^2 to nm/s^2
+        d_v_normal = d_v_normal * 1e7
+
+
+        return v_normal, d_v_normal

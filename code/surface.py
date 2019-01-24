@@ -8,8 +8,9 @@ Class functions:
     write(file, time): writes output file
 """
 
-
+import sys
 import numpy as np
+import scipy.interpolate
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
@@ -19,7 +20,7 @@ import parameters as par
 class Surface:
     def __init__(self, time = None, xValues = None, yValues = None):
         """Init the object. Copy start value for printing."""
-        
+
         if time is None or xValues is None or yValues is None:
             # create a new object based on parameter database
 
@@ -45,27 +46,27 @@ class Surface:
             self.y = deepcopy(yValues)
             self.startx = deepcopy(self.x)
             self.starty = deepcopy(self.y)
-        
+
     def normal(self):
-        """Calc normal vector and return it."""        
+        """Calc normal vector and return it."""
         x = np.concatenate(([self.x[0]], self.x, [self.x[-1]]))
         y = np.concatenate(([self.y[0]], self.y, [self.y[-1]]))
         dx = self._calc_vector(x)
         dy = self._calc_vector(y)
         length = np.linalg.norm([dx,dy],axis=0)
         return dy/length, -dx/length
-    
+
     def _calc_vector(self, value):
         """Subtract end coordinate with start coordinate.
-        
+
         :param value: coordinate array
         """
         delta = value[2:] - value[:-2]
         return delta
-               
-    def write(self, file, time, mode):  
+
+    def write(self, file, time, mode):
         """Write output file.
-        
+
         :param file: filename
         :param time: current time
         """
@@ -73,7 +74,7 @@ class Surface:
             fp.write('surface: {} {} x-positions y-positions\n'.format(time, len(self.x)))
             for x, y in zip(self.x, self.y):
                 fp.write("{} {}\n".format(x, y))
-    
+
     def distance(self, other):
         """Calculates the distance of two surfaces.
         The distance is the mean of the distance of one surface to the points of the other
@@ -81,18 +82,18 @@ class Surface:
         """
         return (self.points_distance(list(zip(other.x, other.y))) +
                 other.points_distance(list(zip(self.x, self.y)))) / 2
-    
+
     def points_distance(self, points):
         """Calculates the distance of a given list of points from this surface"""
         sum = 0
         for point in points:
             sum+= self.point_distance(point)
-        
+
         return sum / len(points)
-    
+
     def point_distance(self, point):
         """Calculates the distance of a point to a surface"""
-        
+
         #define start & enpoint of our surface parts
         self.x = np.array(self.x)
         self.y = np.array(self.y)
@@ -100,56 +101,56 @@ class Surface:
         s_y = self.y[:-1]
         e_x = self.x[1:]
         e_y = self.y[1:]
-        
+
         #define a shorter variable name for point
         px = point[0]
         py = point[1]
-        
+
         #calculate vector and normal vector of segment
         ab_x = e_x - s_x
         ab_y = e_y - s_y
         n_x = ab_y
         n_y = -ab_x
-        
+
         #calculate the normal distance
         ap_x = px - s_x
         ap_y = py - s_y
-        
+
         normal_distance = (n_x*ap_x + n_y*ap_y)/(n_x*n_x + n_y*n_y)
-        
+
         #now calculate where we would be inside the segment
         #0 stands for start point
         #1 stands for end point
         segment_part = (ab_x*ap_x + ab_y*ap_y)/(ab_x*ab_x + ab_y*ab_y)
-        
+
         #use this information to create a mask that shows validity of normal distance
         norm_d_valid = np.logical_and(segment_part >= 0, segment_part <= 1)
-        
+
         #calculate minimum distance based on that
         minimum_distance = None
         if np.any(norm_d_valid):
             minimum_distance = (np.absolute(normal_distance[np.where(norm_d_valid)])).min()
-        
+
         #get distance from start and enpoint and compare
         x_distance = s_x - px
         y_distance = s_y - py
         cur_distance = np.sqrt(x_distance*x_distance + y_distance*y_distance).min()
         if minimum_distance is None or cur_distance < minimum_distance:
             minimum_distance = cur_distance
-        
+
         x_distance = e_x - px
         y_distance = e_y - py
         cur_distance = np.sqrt(x_distance*x_distance + y_distance*y_distance).min()
         if minimum_distance is None or cur_distance < minimum_distance:
             minimum_distance = cur_distance
-        
+
         return minimum_distance
-    
+
     def deloop(self):
         """Remove all loops from the surface"""
-    
+
         n_segments = len(self.y)-1      #amount of segments
-        
+
         #make 2D arrays containing all possible combinations for x,y and dx,dy
         x_i, x_j = np.meshgrid(self.x[:-1],self.x[:-1],indexing='ij')
         y_i, y_j = np.meshgrid(self.y[:-1],self.y[:-1],indexing='ij')
@@ -157,8 +158,8 @@ class Surface:
         dy=np.array(self.y[1:]-self.y[:-1])
         dx_i, dx_j = np.meshgrid(dx, dx, indexing='ij')
         dy_i, dy_j = np.meshgrid(dy, dy, indexing='ij')
-        
-        
+
+
         #creating the arrays for the linear equations A*x=b
         #use np.stack to bring them in the right shape:
         #shape(A)=(M,M,2,2)
@@ -168,41 +169,41 @@ class Surface:
                            np.stack((dy_i,-dy_j),axis=2)))
         b = np.stack(b_temp, axis=2)
         A = np.stack(A_temp, axis=2)
-        
+
         #calculate the rank of each matrix in A.
         #If the rank is one the matrix is singular
         rank = np.linalg.matrix_rank(A)
-        
+
         #create a mask, because not all equations in A*x=b
         #can or must be solved:
         #mask equations without a solution
         mask_singular = np.not_equal(rank,1)
-        #mask the triangele matrix of (M,M), so we don't solve the same 
+        #mask the triangele matrix of (M,M), so we don't solve the same
         #equation twice: ij = ji
-        mask_sing_tri = np.triu(mask_singular) 
+        mask_sing_tri = np.triu(mask_singular)
         #mask equations where i=j and j= i+1
         mask_diagonal = np.logical_not(np.logical_or(np.eye(n_segments, k=1),
                                                      np.eye(n_segments, k=0)))
         #combine all masks
         mask = np.logical_and(mask_sing_tri,mask_diagonal)
-        
+
         #initiate the array for the solutions
         st=np.full_like(b,99999, dtype=float)
-       
+
         #solve the equations A*st=b
         st[mask] = np.linalg.solve(A[mask],b[mask])
         #just solutions where: 0<= s,t <1 are relevant for crossings
         crossings = np.all(np.logical_and(np.greater_equal(st,0),
                                           np.less(st,1)), axis=2)
 
-        #get the indexes of the intersecting segments        
+        #get the indexes of the intersecting segments
         indexes_i, indexes_j = np.meshgrid(np.arange(n_segments),
                                            np.arange(n_segments),indexing='ij')
         i = indexes_i[crossings]
         j = indexes_j[crossings]
         #indexes has the shape: [[i_1,j_1], [i_2, j_2]]
         indexes = np.stack((i,j), axis =1)
-        
+
         #create a mask to remove the loop-segments and add new surface-points
         #for the intersections
         mask_remove = np.ones(n_segments+1, dtype=bool)
@@ -213,9 +214,9 @@ class Surface:
             mask_remove = np.logical_and(mask_remove,mask_remove_temp)
             self.x[temp_i+1] = self.x[temp_i]+ dx[temp_i]*st[(temp_i,temp_j,0)]
             self.y[temp_i+1] = self.y[temp_i]+ dy[temp_i]*st[(temp_i,temp_j,0)]
-               
+
         self.x = self.x[mask_remove]
-        self.y = self.y[mask_remove]   
+        self.y = self.y[mask_remove]
 
     def eliminate_overhangs(self):
         """Eliminate overhanging parts of the surface.
@@ -223,13 +224,13 @@ class Surface:
         for i in range(self.x.size-1):
             self.x[i+1:] = np.where(
                     np.logical_and(self.x[i+1:] < self.x[i],
-                                   self.y[i+1:] < self.y[i]), 
-                    self.x[i], 
+                                   self.y[i+1:] < self.y[i]),
+                    self.x[i],
                     self.x[i+1:])
             self.x[:i] = np.where(
                     np.logical_and(self.x[:i] > self.x[i],
-                                   self.y[:i] < self.y[i]), 
-                    self.x[i], 
+                                   self.y[:i] < self.y[i]),
+                    self.x[i],
                     self.x[:i])
 
     def calc_viewfactor(self):
@@ -244,8 +245,8 @@ class Surface:
         x_i = x_j.transpose()
         y_i = y_j.transpose()
 
-        print("x_i: {}".format(x_i[0]))
-        print("x_j: {}".format(x_j[0]))
+        # print("x_i: {}".format(x_i[0]))
+        # print("x_j: {}".format(x_j[0]))
 
         # calculate distances between nodes i & j
         x_ij = x_i - x_j
@@ -283,22 +284,121 @@ class Surface:
         mask = (cos_a > np.zeros_like(x_i)) * (cos_b > np.zeros_like(x_i)) * np.invert(np.eye(self.x.size, dtype=bool))
         return f_ij * mask
 
+    def calc_viewfactor_derivative(self):
+        """Calculates the derivative of the view-factor from surface parameters
+
+        :return: nxn matrix representing the derivative of the view-factor
+        """
+        # create arrays for nodes i & j (j has equal rows, i has equal columns)
+        x_j = np.ones(shape=(self.x.size, self.x.size)) * self.x
+        y_j = np.ones(shape=(self.y.size, self.y.size)) * self.y
+
+        x_i = x_j.transpose()
+        y_i = y_j.transpose()
+
+        # print("x_i: {}".format(x_i[0]))
+        # print("x_j: {}".format(x_j[0]))
+
+        # calculate distances between nodes i & j
+        x_ij = x_i - x_j
+        y_ij = y_i - y_j
+
+        # create arrays for the normal vectors of nodes i & j (j has equal rows, i has equal columns)
+        x_normal, y_normal = self.normal()
+        x_i_normal = np.ones_like(x_i) * -x_normal[:, np.newaxis]
+        y_i_normal = np.ones_like(y_i) * -y_normal[:, np.newaxis]
+        x_j_normal = np.ones_like(x_j) * -x_normal
+        y_j_normal = np.ones_like(y_j) * -y_normal
+
+        # calculate cosines of angles (cos_a, cos_b) with [(a*b)/(|a|*|b|)]
+        # deactivate warnings when division by zero -> is covered with np.nan_to_num
+        with np.errstate(divide='ignore', invalid='ignore'):
+            cos_a = np.nan_to_num((x_j_normal*x_ij + y_j_normal*y_ij) / (np.sqrt(x_j_normal**2+y_j_normal**2) * np.sqrt(x_ij**2+y_ij**2)))
+            cos_b = np.nan_to_num((x_i_normal*-x_ij + y_i_normal*-y_ij) / (np.sqrt(x_i_normal**2+y_i_normal**2) * np.sqrt(x_ij**2+y_ij**2)))
+            sin_b = ((x_i_normal * x_ij + y_i_normal * y_ij) / (
+            np.sqrt(x_i_normal ** 2 + y_i_normal ** 2) * np.sqrt(x_ij ** 2 + y_ij ** 2)))
+            sin_b = np.sqrt(1 - sin_b**2)
+            sin_b = np.nan_to_num(sin_b)
+            sin_b = np.copysign(sin_b, x_normal)
+
+        # calculate distances between nodes i & j (d_ij)
+        d_ij = np.sqrt(x_ij ** 2 + y_ij ** 2)
+
+        # calculate surface length of node (delta_l)
+        x = np.concatenate(([2*self.x[0]-self.x[1]], self.x, [3*self.x[-1]-self.x[-2]]))
+        y = np.concatenate(([self.y[0]], self.y, [self.y[-1]]))
+        d_x = x[1:] - x[:-1]
+        d_y = y[1:] - y[:-1]
+        d_l = np.sqrt(d_x**2 + d_y**2)
+        d_l_avg = (d_l[1:]+d_l[:-1]) / 2
+        delta_l = np.ones_like(x_i) * d_l_avg
+
+        # calculate view-factor and mask out all values where cos_a<0 and cos_b<0 and all elements on diagonal
+        # deactivate warnings when division by zero ->is covered with np.nan_to_num
+        with np.errstate(divide='ignore', invalid='ignore'):
+            f_ij = np.nan_to_num((cos_a * sin_b * delta_l) / (2 * d_ij))
+        mask = (cos_a > np.zeros_like(x_i)) * (cos_b > np.zeros_like(x_i)) * np.invert(np.eye(self.x.size, dtype=bool))
+        return f_ij * mask
+
+    def adapt(self, interpol_type='linear'):
+        """"Adds or removes nodes to keep surface length and normal vector angle near constant"""
+
+        # Node interpolation
+        x_dist = np.abs(self.x[1:]-self.x[:-1])
+        if np.any(x_dist < 0):
+            sys.exit()
+        y_dist = np.abs(self.y[1:]-self.y[:-1])
+        # prepend zero to match dist index to node index
+        dist = np.insert(np.sqrt(np.square(x_dist) + np.square(y_dist)), 0, 0)
+        dist_index, = np.where(dist > par.MAX_SEGLEN)
+        num_insert_nodes = np.int32(np.ceil(dist[dist_index] / par.MAX_SEGLEN))
+        new_points = np.split(self.x, dist_index)
+        # TODO exchange for lambda expression?
+        for i in range(len(dist_index)):
+            line = np.linspace(self.x[dist_index[i] - 1],
+                               self.x[dist_index[i]],
+                               num_insert_nodes[i],
+                               endpoint=False)
+            line = np.delete(line, 0)
+            new_points[i] = np.append(new_points[i], line)
+        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'linear')
+        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'quadratic')
+        interpolate = scipy.interpolate.interp1d(self.x, self.y, interpol_type)
+        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'cubic')
+        self.x = np.concatenate(new_points)
+        self.y = interpolate(self.x)
+
+        # Node removal
+        x_dist2 = np.abs(self.x[2:]-self.x[:-2])
+        y_dist2 = np.abs(self.y[2:]-self.y[:-2])
+        dist2 = np.insert(np.sqrt(x_dist2**2 + y_dist2**2), (0,1) , 0)
+        remove_mask = np.where(dist2 < par.MAX_SEGLEN)
+        #remove_mask = (self.x[2:] - self.x[:-2]) < par.MAX_SEGLEN
+        print('Mask:\n',remove_mask)
+        #remove_mask = np.insert(remove_mask, (0, -1), True)
+
+        #self.x = self.x[remove_mask]
+        #self.y = self.y[remove_mask]
+        #self.x = np.delete(self.x, remove_mask)
+        #self.y = np.delete(self.y, remove_mask)
+        # Angle
+        #return
 
 def load(file, wanted_time = None):
     """
     Loads the data from a .srt file.
     Loads the nearest time to that specified. If None given it will use last possible time
-    
+
     :param file filename to load the data from
     :param time time to load from file
-    
+
     :return return a surface object with best matching time inside file
     """
     time = -1
     numel = None
     xValues = []
     yValues = []
-    
+
     #get relevant data from save file
     with open(file) as data_file:
         for line in data_file:
@@ -306,15 +406,15 @@ def load(file, wanted_time = None):
             if 'surface:' in line:
                 splittedLine = line.split(' ')
                 cur_time = float(splittedLine[1])
-                
+
                 #we assume the time to be sorted so we can simply wait till the diff gets bigger
                 if wanted_time is not None and abs(cur_time - wanted_time) > abs(time - wanted_time):
                         #best found simply stop loop
                         break
-                
+
                 time = cur_time
                 numel = float(splittedLine[2])
-                
+
                 # Reset lists to be empty
                 xValues.clear()
                 yValues.clear()
@@ -325,6 +425,6 @@ def load(file, wanted_time = None):
                 yValue = xyValuePair[1]
                 xValues.append(float(xValue))
                 yValues.append(float(yValue))
-    
+
     #transform it into a surface object
     return Surface(time, xValues, yValues)
