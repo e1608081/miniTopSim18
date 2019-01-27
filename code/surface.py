@@ -27,8 +27,8 @@ class Surface:
             # use the surface file if specified
             if par.INITIAL_SURFACE_FILE != '':
                 surface = load(par.INITIAL_SURFACE_FILE)
-                self.x = np.array(surface.x)
-                self.y = np.array(surface.y)
+                self.x = surface.x
+                self.y = surface.y
                 self.startx = deepcopy(self.x)
                 self.starty = deepcopy(self.y)
 
@@ -42,8 +42,8 @@ class Surface:
 
         else:
             #initial values given use them
-            self.x = deepcopy(xValues)
-            self.y = deepcopy(yValues)
+            self.x = np.array(xValues)
+            self.y = np.array(yValues)
             self.startx = deepcopy(self.x)
             self.starty = deepcopy(self.y)
 
@@ -51,19 +51,56 @@ class Surface:
         """Calc normal vector and return it."""
         x = np.concatenate(([self.x[0]], self.x, [self.x[-1]]))
         y = np.concatenate(([self.y[0]], self.y, [self.y[-1]]))
-        dx = self._calc_vector(x)
-        dy = self._calc_vector(y)
-        length = np.linalg.norm([dx,dy],axis=0)
-        return dy/length, -dx/length
 
-    def _calc_vector(self, value):
-        """Subtract end coordinate with start coordinate.
+        # Find duplicate nodes. Mask indices match node indices on [1:-1]
+        duplicate_mask = np.logical_and(np.equal(x[:-1], x[1:]), np.equal(y[:-1], y[1:]))
+        dm_left = np.append(duplicate_mask, False)
+        dm_right = np.insert(duplicate_mask, 0, False)
+        duplicate_mask = np.logical_or(dm_left, dm_right)
 
-        :param value: coordinate array
-        """
-        delta = value[2:] - value[:-2]
-        return delta
+        duplicate_mask[-2] = False
+        duplicate_mask[1] = False
+        unique_mask = np.invert(duplicate_mask)
+        duplicate_mask[0] = False
+        duplicate_mask[-1] = False
+        duplicate_index, = np.nonzero(duplicate_mask)
+        unique_index, = np.nonzero(unique_mask)
 
+        # Calculate normal vectors for unique nodes.
+        dx = np.zeros_like(x)
+        dy = np.zeros_like(y)
+        dx[unique_index] = x[unique_index+1] - x[unique_index-1]
+        dy[unique_index] = y[unique_index+1] - y[unique_index-1]
+
+        length = np.linalg.norm([dx, dy], axis=0)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            norm_x = dy / length
+            norm_y = -dx / length
+
+        # Calculate angle of existing normal vectors.
+        norm_angles = np.angle(norm_x + 1j*norm_y)
+        angle_index = []
+
+        # Traverse through duplicate node mask to get indices and amounts of duplicate nodes.
+        dpm = np.array(duplicate_mask)
+        for i in range(len(dpm)-1):
+            index = deepcopy(i)
+            while dpm[i]:
+                dpm[i] = False
+                i = i+1
+            angle_index.append((index, i-index))
+
+        # Calculate angles for duplicate nodes.
+        for index, elem in angle_index:
+            new_angles = np.linspace(norm_angles[index-1], norm_angles[index+elem],
+                                     elem+2, endpoint=True)
+            norm_angles[index:index + elem] = new_angles[1:-1]
+
+        norm_x[duplicate_index] = np.cos(norm_angles[duplicate_index])
+        norm_y[duplicate_index] = np.sin(norm_angles[duplicate_index])
+
+        return norm_x[1:-1], norm_y[1:-1]
+               
     def write(self, file, time, mode):
         """Write output file.
 
@@ -340,49 +377,145 @@ class Surface:
         mask = (cos_a > np.zeros_like(x_i)) * (cos_b > np.zeros_like(x_i)) * np.invert(np.eye(self.x.size, dtype=bool))
         return f_ij * mask
 
-    def adapt(self, interpol_type='linear'):
-        """"Adds or removes nodes to keep surface length and normal vector angle near constant"""
+    def adapt(self):
+        """"Adds or removes nodes to keep surface length and normal vector angle near constant
+        """
+        self._delete_nodes()
+        try:
+            self._insert_by_distance()
+        except ValueError as Err:
+            raise Err
+        self._insert_by_angle()
 
-        # Node interpolation
-        x_dist = np.abs(self.x[1:]-self.x[:-1])
-        if np.any(x_dist < 0):
-            sys.exit()
-        y_dist = np.abs(self.y[1:]-self.y[:-1])
-        # prepend zero to match dist index to node index
-        dist = np.insert(np.sqrt(np.square(x_dist) + np.square(y_dist)), 0, 0)
-        dist_index, = np.where(dist > par.MAX_SEGLEN)
-        num_insert_nodes = np.int32(np.ceil(dist[dist_index] / par.MAX_SEGLEN))
+    def _insert_by_distance(self, interpol_type='quadratic'):
+        """Inserts nodes if distance exceeds par.MAX_SEGLEN"""
+        # Raise Error if points not in strict ascending order.
+        if np.any(self.x[1:] <= self.x[:-1]):
+            index = tuple(np.where(self.x[1:] <= self.x[:-1])[0])
+            # self.x = np.delete(self.x, index)
+            # self.y = np.delete(self.y, index)
+            raise ValueError('Adaptive Grid: Nodes not in strictly ascending order at indices:', index)
+
+        # Calculate distances of nodes
+        x_dist = np.abs(self.x[1:] - self.x[:-1])
+        y_dist = np.abs(self.y[1:] - self.y[:-1])
+        distance = np.insert(np.sqrt(x_dist ** 2 + y_dist ** 2), 0, 0)
+
+        # Find where and how many nodes to insert by distance criteria
+        dist_index, = np.where(distance > par.MAX_SEGLEN)
+        # insert_nodes = np.floor_divide(distance[dist_index], par.MAX_SEGLEN)
+        insert_nodes = np.int32(np.ceil(distance[dist_index] / par.MAX_SEGLEN))
         new_points = np.split(self.x, dist_index)
-        # TODO exchange for lambda expression?
+
+        # Insert equally spaced points in x-axis
         for i in range(len(dist_index)):
-            line = np.linspace(self.x[dist_index[i] - 1],
+            line = np.linspace(self.x[dist_index[i]-1],
                                self.x[dist_index[i]],
-                               num_insert_nodes[i],
-                               endpoint=False)
-            line = np.delete(line, 0)
+                               insert_nodes[i] + 1,
+                               endpoint=True)
+            line = line[1:-1]
             new_points[i] = np.append(new_points[i], line)
-        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'linear')
-        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'quadratic')
+
         interpolate = scipy.interpolate.interp1d(self.x, self.y, interpol_type)
-        #interpolate = scipy.interpolate.interp1d(self.x, self.y, 'cubic')
         self.x = np.concatenate(new_points)
         self.y = interpolate(self.x)
 
-        # Node removal
-        x_dist2 = np.abs(self.x[2:]-self.x[:-2])
-        y_dist2 = np.abs(self.y[2:]-self.y[:-2])
-        dist2 = np.insert(np.sqrt(x_dist2**2 + y_dist2**2), (0,1) , 0)
-        remove_mask = np.where(dist2 < par.MAX_SEGLEN)
-        #remove_mask = (self.x[2:] - self.x[:-2]) < par.MAX_SEGLEN
-        print('Mask:\n',remove_mask)
-        #remove_mask = np.insert(remove_mask, (0, -1), True)
+    def _insert_by_angle(self):
+        surface_x = self.x[1:] - self.x[:-1]
+        surface_y = self.y[1:] - self.y[:-1]
+        surface_norms = np.angle(surface_y - 1j * surface_x, deg=True)
+        surface_angles = np.abs(surface_norms[1:] - surface_norms[:-1])
 
-        #self.x = self.x[remove_mask]
-        #self.y = self.y[remove_mask]
-        #self.x = np.delete(self.x, remove_mask)
-        #self.y = np.delete(self.y, remove_mask)
-        # Angle
-        #return
+        # Find where to insert nodes by angle criteria.
+        angle_index, = np.where(surface_angles > par.MAX_ANGLE)
+
+        # Split before Nodes to duplicate.
+        x = np.split(self.x, angle_index + 1)
+        y = np.split(self.y, angle_index + 1)
+
+        # Insert nodes.
+        for i in range(len(angle_index)):
+            amt = np.int32(np.floor(np.abs(surface_angles[angle_index[i]] / par.MAX_ANGLE)))-1
+
+            x[i] = np.concatenate((x[i], np.full(amt, x[i+1][0])))
+            y[i] = np.concatenate((y[i], np.full(amt, y[i+1][0])))
+
+        self.x = np.concatenate(x)
+        self.y = np.concatenate(y)
+
+    def _delete_nodes(self):
+        x = np.concatenate(([self.x[0]], self.x, [self.x[-1]]))
+        y = np.concatenate(([self.y[0]], self.y, [self.y[-1]]))
+
+        # Calculate where node removal meets angle criteria.
+        surface_x = x[1:] - x[:-1]
+        surface_y = y[1:] - y[:-1]
+        surface_norms = np.angle(surface_y - 1j * surface_x, deg=True)
+        surface_angles = np.abs(surface_norms[1:] - surface_norms[:-1])
+        angle_mask = surface_angles < par.MAX_ANGLE
+
+        # Calculate where node removal meets distance criteria.
+        x_dist2 = x[2:] - x[:-2]
+        y_dist2 = y[2:] - y[:-2]
+        dist2 = np.sqrt(x_dist2**2 + y_dist2**2)
+
+        distance_mask = dist2 < par.MAX_SEGLEN
+        distance_mask[0] = False
+        distance_mask[-1] = False
+        # Get indices where distance criteria is met.
+        index, = np.where(distance_mask)
+        rem = np.vstack((index, dist2[index]))
+
+        # Remove nodes with smallest new distance first, to prevent chain removal of adjacent nodes.
+        while rem.size:
+            minimum = np.argmin(rem, axis=1)
+            index = int(minimum[1])
+            # Recalculate distance criteria for preceding node.
+            if rem[0][index] - 1 in rem[0]:
+                j = int(rem[0][index])
+
+                # Calculate index offset.
+                off_l = 2
+                while distance_mask[index-off_l] and index-off_l not in rem[0]:
+                    off_l = off_l + 1
+                off_r = 1
+                while distance_mask[index + off_r] and index+off_r not in rem[0]:
+                    off_r = off_r + 1
+
+                # Update distance in preceding node.
+                x_d = np.abs(x[j + off_r] - x[j - off_l])
+                y_d = np.abs(y[j + off_r] - y[j - off_l])
+                rem[1][index - 1] = np.sqrt(x_d ** 2 + y_d ** 2)
+
+            # Recalculate distance criteria for following node.
+            if rem[0][index] + 1 in rem[0]:
+                j = int(rem[0][index])
+
+                # Calculate index offset.
+                off_l = 1
+                while distance_mask[index-off_l] and index-off_l not in rem[0]:
+                    off_l = off_l + 1
+                off_r = 2
+                while distance_mask[index + off_r] and index+off_r not in rem[0]:
+                    off_r = off_r + 1
+
+                # Update distance in preceding node.
+                x_d = np.abs(x[j + off_r] - x[j - off_l])
+                y_d = np.abs(y[j + off_r] - y[j - off_l])
+                rem[1][index - 1] = np.sqrt(x_d ** 2 + y_d ** 2)
+
+            # Mark current node for deletion.
+            if rem[1][index] < par.MAX_SEGLEN:
+                rem = np.delete(rem, index, 1)
+            else:
+                distance_mask[int(rem[0][index])] = False
+                rem = np.delete(rem, index, 1)
+
+        # Remove nodes.
+        delete, = np.where(np.logical_and(angle_mask, distance_mask))
+
+        self.x = np.delete(self.x, delete)
+        self.y = np.delete(self.y, delete)
 
 def load(file, wanted_time = None):
     """

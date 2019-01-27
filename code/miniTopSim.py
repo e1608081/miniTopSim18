@@ -5,7 +5,8 @@ Main file for miniTopSim
 
 import sys
 import os
-from time import clock
+#from time import clock
+from time import perf_counter
 
 import advance as adv
 import parameters as par
@@ -21,9 +22,10 @@ def simulate(config_file, do_plotting=True):
 
         :return the surface object after last simulation step
     """
-
-    time_start = clock()
-
+    
+    #time_start = clock()
+    time_start = perf_counter()
+    
     try:
         par.set_parameters(config_file)
     except FileNotFoundError as err:
@@ -44,12 +46,20 @@ def simulate(config_file, do_plotting=True):
     surface.write(surface_filename, time, 'w')
 
     while time < tend:
-        adv.advance(surface,dt)
-        dt = adv.timestep(dt, time, tend)
-        time += dt
-        surface.write(surface_filename, time, 'a')
+        try:
+            adv.advance(surface,dt)
+        except ValueError as Err:
+            print(Err)
+            break
+        else:
+            dt = adv.timestep(dt, time, tend)
+            time += dt
+        finally:
+            surface.write(surface_filename, time, 'a')
+    
+    #time_compute = clock() - time_start
+    time_compute = perf_counter() - time_start
 
-    time_compute = clock() - time_start
     print("Computing Time = " + str(time_compute))
 
     if par.PLOT_SURFACE and do_plotting:
@@ -59,6 +69,7 @@ def simulate(config_file, do_plotting=True):
             plot.plot(surface_filename)
 
     return surface
+
 
 if __name__ == "__main__":
 #    try:

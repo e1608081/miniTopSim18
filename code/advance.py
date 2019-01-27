@@ -30,6 +30,11 @@ def advance(surface, dtime):
     :param surface: surface object
     :param dtime: timestep size
     """
+    if par.ADAPTIVE_GRID:
+        try:
+            surface.adapt()
+        except ValueError as Err:
+            raise Err
 
     normal_v, d_normal_v = get_velocities(surface, dtime)
     normal_x, normal_y = surface.normal()
@@ -55,8 +60,6 @@ def advance(surface, dtime):
     surface.deloop()
     surface.eliminate_overhangs()
 
-    if par.ADAPTIVE_GRID is True:
-        surface.adapt()
 
 def timestep(dtime, time, endTime):
     """Get next possible timestep.
